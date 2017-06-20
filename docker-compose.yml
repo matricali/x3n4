@@ -1,0 +1,9 @@
+version: '2'
+
+services:
+    webserver:
+        image: 'php:5.6-apache'
+        ports:
+            - '80:80'
+        volumes:
+            - .:/var/www/html/shell
