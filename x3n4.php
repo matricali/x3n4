@@ -1,6 +1,6 @@
 <?php
 
-define('X3N4_VERSION', 'v0.1.2-alpha');
+define('X3N4_VERSION', 'v0.1.3-alpha');
 
 session_start();
 
@@ -59,7 +59,7 @@ if (isset($_REQUEST['cmd'])) {
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <title>x3n4 v0.1</title>
+    <title>x3n4 <?php echo X3N4_VERSION; ?></title>
 
     <!-- Bootstrap -->
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
@@ -103,6 +103,7 @@ if (isset($_REQUEST['cmd'])) {
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script>
         function x3n4 () {
+            this.version = '<?php echo X3N4_VERSION; ?>';
             this.execCommand = function(command) {
                 if (command.trim() == 'clear') {
                     $('#stdout').html('');
@@ -122,10 +123,11 @@ if (isset($_REQUEST['cmd'])) {
                 $('#stdin').val('');
             }
             this.checkUpdate = function() {
-                //
                 $.get('https://api.github.com/repos/jorge-matricali/x3n4/releases', function(data) {
-                    $('#stdout').append(data[0].tag_name + " available.\n");
-                    $('#stdout').scrollTop($('#stdout')[0].scrollHeight);
+                    if (window.x3n4.version !== data[0].tag_name) {
+                        $('#stdout').append('/!\\ x3n4 ' + data[0].tag_name + " available. Type 'upgrade' to download the latest version automatically.\n");
+                        $('#stdout').scrollTop($('#stdout')[0].scrollHeight);
+                    }
                 });
             }
             this.declareCallbacks = function() {
@@ -139,6 +141,7 @@ if (isset($_REQUEST['cmd'])) {
         }
         window.x3n4 = new x3n4();
         window.x3n4.declareCallbacks();
+        window.x3n4.checkUpdate();
     </script>
 </body>
 </html>
