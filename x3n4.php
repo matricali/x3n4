@@ -288,7 +288,7 @@ if (isset($_REQUEST['eval'])) {
             </div>
 
             <div id="php-eval" role="tabpanel" class="tab-pane">
-                <textarea id="php-code" class="form-control">echo 'hello world';</textarea>
+                <textarea id="php-code" class="form-control" rows="5">echo 'hello world';</textarea>
                 <button type="button" class="btn btn-default" id="btnEval"><i class="fa fa-play"></i> Run</button>
                 <pre id="php-stdout"></pre>
             </div>
@@ -299,6 +299,14 @@ if (isset($_REQUEST['eval'])) {
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.8/ace.js"></script>
+    <script>
+        window.editorPhp = ace.edit("php-code");
+        window.editorPhp.setTheme("ace/theme/monokai");
+        window.editorPhp.getSession().setMode("ace/mode/php");
+        window.editorPhp.resize(true);
+    </script>
+
     <script>
         function x3n4 () {
             this.version = '<?php echo X3N4_VERSION; ?>';
@@ -337,7 +345,13 @@ if (isset($_REQUEST['eval'])) {
                 $('#stdin').val('');
             }
             this.clickEval = function() {
-                window.x3n4.evalPhp($('#php-code').val());
+                var code = '';
+                if (window.editorPhp) {
+                    code = window.editorPhp.getValue();
+                } else {
+                    code = $('#php-code').val();
+                }
+                window.x3n4.evalPhp(code);
             }
             this.checkUpdate = function() {
                 $.get('https://api.github.com/repos/jorge-matricali/x3n4/releases', function(data) {
