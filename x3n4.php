@@ -1,6 +1,6 @@
 <?php
 
-define('X3N4_VERSION', 'v0.1.4-alpha');
+define('X3N4_VERSION', 'v0.1.5-alpha');
 
 session_start();
 
