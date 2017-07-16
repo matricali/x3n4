@@ -94,7 +94,7 @@ gulp.task('clean', function () {
 
 gulp.task('build', function (callback) {
   console.log('Building...')
-  sequence('clean', ['copy'], ['minify'], ['merge'], callback)
+  sequence(['clean'], ['minify'], ['merge'], callback)
 })
 
 gulp.task('default', ['build'])
