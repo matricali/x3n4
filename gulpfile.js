@@ -36,7 +36,7 @@ var rename = require('gulp-rename')
 var dir = {
   dist: './dist'
 }
-var distFilename = 'x3n4_DIST.php'
+var distFilename = 'x3n4.php'
 
 gulp.task('copy', function () {
   gulp.src('x3n4.core.php').pipe(gulp.dest(dir.dist))
