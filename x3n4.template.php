@@ -23,7 +23,7 @@
     <?php readfile('x3n4.css'); ?>
     </style>
 </head>
-<body>
+<body class="loading">
     <div class="container">
         <h1 class="page-header">
             <span class="pull-right label label-<?php echo ini_get('safe_mode') ? 'success' : 'danger'; ?>">safe_mode <?php echo ini_get('safe_mode') ? 'ON' : 'OFF'; ?></span>
@@ -135,6 +135,10 @@ echo 'hello world';"; ?></textarea>
         window.x3n4_version = '<?php echo X3N4_VERSION; ?>';
         window.script_path = '<?php echo $_SERVER['REQUEST_URI']; ?>';
         window.directory_separator = '<?php echo DIRECTORY_SEPARATOR; ?>';
+
+        window.onload = function() {
+          $('body').removeClass('loading');
+        };
     </script>
     <script><?php readfile('x3n4.js'); ?></script>
 </body>

