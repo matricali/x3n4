@@ -1,4 +1,4 @@
-# X3N4 Shell v0.1.4-alpha
+# X3N4 Shell v0.2.0-alpha
 This web-based shell is a useful tool for system or web administrators that need to perform management tasks remotelly without using CPanel, SSH connections, FTP connections, etc.
 > PHP is the most commonly used server-side programming language, with 81.8% of web servers deploying it, according to W3 Techs.
 
@@ -11,4 +11,8 @@ This web-based shell is a useful tool for system or web administrators that need
 * Responsability on how do you use this tool
 
 ### Screenshots:
-![x3n4 Shell v0.1.4-alpha](http://i1174.photobucket.com/albums/r608/jorge-matricali/Captura%20de%20pantalla%202017-06-20%20a%20las%2021.44.09_zpsm9dq4luq.png)
+![x3n4 Shell v0.2.0-alpha - Shell](http://i1174.photobucket.com/albums/r608/jorge-matricali/Captura%20de%20pantalla%202017-07-16%20a%20las%2021.47.16_zpsvl0xzaet.png)
+
+![x3n4 Shell v0.2.0-alpha - Run PHP Code](http://i1174.photobucket.com/albums/r608/jorge-matricali/Captura%20de%20pantalla%202017-07-16%20a%20las%2021.50.41_zps1if5mahb.png)
+
+![x3n4 Shell v0.2.0-alpha - File manager](http://i1174.photobucket.com/albums/r608/jorge-matricali/Captura%20de%20pantalla%202017-07-16%20a%20las%2021.51.12_zpsazi4cb7d.png)
