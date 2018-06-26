@@ -213,6 +213,10 @@ if (isset($_REQUEST['cmd'])) {
                         <td><?php echo $_SERVER['SERVER_SOFTWARE']; ?></td>
                     </tr>
                     <tr>
+                        <td>PHP Version:</td>
+                        <td><?php echo phpversion(); ?></td>
+                    </tr>
+                    <tr>
                         <td>Client IP:</td>
                         <td><?php echo $_SERVER['REMOTE_ADDR']; ?></td>
                     </tr>
