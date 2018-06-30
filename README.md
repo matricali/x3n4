@@ -19,6 +19,8 @@ This web-based shell is a useful tool for system or web administrators that need
 * HTTP Basic access authentication (thanks to @davidtavarez)
   * Default user `x3n4`
   * Default password `P455W0rd`
+* Self updatable
+  * Use `upgrade` command to automatically fetch the last x3n4 release from Github
 
 ### Requeriments:
 * PHP 4.3.3+, 5.x or 7.x
