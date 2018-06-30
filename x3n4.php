@@ -17,16 +17,16 @@ function get_shell_command()
     static $shell_command;
 
     if ($shell_command === null) {
-        if (is_callable('proc_open') && !is_function_disabled('system')) {
-            $shell_command = 'proc_open';
+        if (is_callable('system') && !is_function_disabled('system')) {
+            $shell_command = 'system';
         } elseif (is_callable('shell_exec') && !is_function_disabled('shell_exec')) {
             $shell_command = 'shell_exec';
         } elseif (is_callable('exec') && !is_function_disabled('exec')) {
             $shell_command = 'exec';
         } elseif (is_callable('passthru') && !is_function_disabled('passthru')) {
             $shell_command = 'passthru';
-        } elseif (is_callable('system') && !is_function_disabled('system')) {
-            $shell_command = 'system';
+        } elseif (is_callable('proc_open') && !is_function_disabled('proc_open')) {
+            $shell_command = 'proc_open';
         } elseif (is_callable('popen') && !is_function_disabled('popen')) {
             $shell_command = 'popen';
         }
