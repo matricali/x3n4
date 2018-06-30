@@ -1,6 +1,6 @@
 <?php
 
-define('X3N4_VERSION', 'v0.1.5-alpha');
+define('X3N4_VERSION', 'v0.1.6-alpha');
 
 $user = 'x3n4';
 $password = 'P455W0rd';
