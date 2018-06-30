@@ -17,16 +17,16 @@ function get_shell_command()
     static $shell_command;
 
     if ($shell_command === null) {
-        if (is_callable('system') && !is_function_disabled('system')) {
-            $shell_command = 'system';
+        if (is_callable('proc_open') && !is_function_disabled('system')) {
+            $shell_command = 'proc_open';
         } elseif (is_callable('shell_exec') && !is_function_disabled('shell_exec')) {
             $shell_command = 'shell_exec';
         } elseif (is_callable('exec') && !is_function_disabled('exec')) {
             $shell_command = 'exec';
         } elseif (is_callable('passthru') && !is_function_disabled('passthru')) {
             $shell_command = 'passthru';
-        } elseif (is_callable('proc_open') && !is_function_disabled('proc_open')) {
-            $shell_command = 'proc_open';
+        } elseif (is_callable('system') && !is_function_disabled('system')) {
+            $shell_command = 'system';
         } elseif (is_callable('popen') && !is_function_disabled('popen')) {
             $shell_command = 'popen';
         }
@@ -49,6 +49,24 @@ function execute_command($command)
 
         case 'exec':
             return @exec($command);
+
+        case 'proc_open':
+            $descriptors = array(
+                0 => array('pipe', 'r'),
+                1 => array('pipe', 'w'),
+                2 => array('pipe', 'w')
+            );
+
+            $process = proc_open($command . ' 2>&1', $descriptors, $pipes, getcwd());
+
+            fclose($pipes[0]);
+            $output = stream_get_contents($pipes[1]);
+            fclose($pipes[1]);
+            $error = stream_get_contents($pipes[2]);
+            fclose($pipes[2]);
+            $code = proc_close($process);
+
+            return $output;
 
         default:
             return 'None available function to run your command, sorry. :(';
