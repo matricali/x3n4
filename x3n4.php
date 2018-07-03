@@ -369,7 +369,6 @@ if (isset($_REQUEST['cmd'])) {
                 });
             }
             this.bindKeyboardEvents = function() {
-
                 $('#stdin').on('keydown', { history : this.history, count : this.key_count }, function (ev) {
                     var code = (ev.keyCode ? ev.keyCode : ev.which);
                     if(ev.data.history.length > 0){
