@@ -36,6 +36,7 @@ function get_shell_command()
 }
 function execute_command($command)
 {
+    $command .= ' 2>&1';
     switch (get_shell_command()) {
         case 'system':
             ob_start();
@@ -65,7 +66,7 @@ function execute_command($command)
                 2 => array('pipe', 'w')
             );
 
-            $process = proc_open($command . ' 2>&1', $descriptors, $pipes, getcwd());
+            $process = proc_open($command, $descriptors, $pipes, getcwd());
 
             fclose($pipes[0]);
             $output = stream_get_contents($pipes[1]);
@@ -77,7 +78,7 @@ function execute_command($command)
             return $output;
 
         case 'popen':
-            $process = popen($command . ' 2>&1', 'r');
+            $process = popen($command, 'r');
             $output = fread($process, 4096);
             pclose($process);
             return $output;
