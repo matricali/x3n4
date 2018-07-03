@@ -382,7 +382,7 @@ if (isset($_REQUEST['cmd'])) {
                                 }
                                 break;
                             case 40:
-                              if (ev.data.count < (ev.data.history.length)){
+                              if (ev.data.count < ev.data.history.length){
                                       ev.data.count--;
                                       var command = ev.data.history[(ev.data.history.length - 1) - ev.data.count];
                                       $('#stdin').val(command);
