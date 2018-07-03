@@ -369,7 +369,6 @@ if (isset($_REQUEST['cmd'])) {
                 });
             }
             this.bindKeyboardEvents = function() {
-
                 $('#stdin').on('keydown', { history : this.history, count : this.key_count }, function (ev) {
                     var code = (ev.keyCode ? ev.keyCode : ev.which);
                     if(ev.data.history.length > 0){
@@ -382,12 +381,11 @@ if (isset($_REQUEST['cmd'])) {
                                 }
                                 break;
                             case 40:
-                                var command = ev.data.history[ev.data.count - 1];
-                                console.log(command);
-                                /*if (typeof command !== "undefined"){
-                                    ev.data.count--;
-                                    $('#stdin').val(command);
-                                }*/
+                              if (ev.data.count < ev.data.history.length){
+                                      ev.data.count--;
+                                      var command = ev.data.history[(ev.data.history.length - 1) - ev.data.count];
+                                      $('#stdin').val(command);
+                                  }
                                 break;
                         }}
                     }
