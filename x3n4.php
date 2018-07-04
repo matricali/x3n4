@@ -361,6 +361,10 @@ if (isset($_REQUEST['cmd'])) {
             this.version = '<?php echo X3N4_VERSION; ?>';
             this.script_path = '<?php echo $_SERVER['REQUEST_URI']; ?>';
             this.algo = '<?php echo X3N4_ENCRYPTION_ALGORITHM; ?>';
+
+            this.history = [];
+            this.key_count = -1;
+
             this.encrypt = function(input) {
                 switch (this.algo) {
                     case 'b64':
@@ -384,6 +388,7 @@ if (isset($_REQUEST['cmd'])) {
                     $('#stdout').html('');
                     return;
                 }
+                this.history.push(command);
                 $('#stdout').append($('#pwd').html() + " " + command + "\n");
                 var that = this;
                 $.post(this.script_path, {cmd: this.encrypt(command)}, function(data) {
@@ -413,10 +418,34 @@ if (isset($_REQUEST['cmd'])) {
                     }
                 });
             }
+            this.bindKeyboardEvents = function() {
+                $('#stdin').on('keydown', { history : this.history, count : this.key_count }, function (ev) {
+                    var code = (ev.keyCode ? ev.keyCode : ev.which);
+                    if(ev.data.history.length > 0){
+                        switch (code){
+                            case 38:
+                                if (ev.data.count < (ev.data.history.length - 1)){
+                                    ev.data.count++;
+                                    var command = ev.data.history[(ev.data.history.length - 1) - ev.data.count];
+                                    $('#stdin').val(command);
+                                }
+                                break;
+                            case 40:
+                                if (ev.data.count < ev.data.history.length){
+                                    ev.data.count--;
+                                    var command = ev.data.history[(ev.data.history.length - 1) - ev.data.count];
+                                    $('#stdin').val(command);
+                                }
+                                break;
+                        }}
+                    }
+                );
+            }
         }
         window.x3n4 = new x3n4();
         window.x3n4.declareCallbacks();
         window.x3n4.checkUpdate();
+        window.x3n4.bindKeyboardEvents();
     </script>
 </body>
 </html>
