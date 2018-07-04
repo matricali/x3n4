@@ -412,14 +412,11 @@ if (isset($_REQUEST['eval'])) {
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.8/ace.js"></script>
     <script>
-        window.php_code = ace.edit('php-code');
-        window.php_code.setTheme('ace/theme/monokai');
-        window.php_code.getSession().setMode('ace/mode/php');
-        window.php_code.getSession().setUseWrapMode(true);
-        window.php_code.resize(true);
-        window.php_code.setOptions({
-            fontSize: "11pt"
-        });
+        window.editorPhp = ace.edit('php-code');
+        window.editorPhp.setTheme('ace/theme/monokai');
+        window.editorPhp.getSession().setMode('ace/mode/php');
+        window.editorPhp.getSession().setUseWrapMode(true);
+        window.editorPhp.resize(true);
     </script>
 
     <script>
@@ -519,8 +516,8 @@ if (isset($_REQUEST['eval'])) {
             }
             this.clickEval = function () {
                 var code = '';
-                if (window.php_code) {
-                    code = window.php_code.getValue();
+                if (window.editorPhp) {
+                    code = window.editorPhp.getValue();
                 } else {
                     code = $('#php-code').val();
                 }
