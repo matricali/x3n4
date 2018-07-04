@@ -259,6 +259,8 @@ if (isset($_REQUEST['cmd'])) {
     <style>
     #stdout {
         max-height: 650px;
+        background: #2F3129;
+        color: #8F908A;
     }
     </style>
 </head>
