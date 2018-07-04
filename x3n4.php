@@ -420,18 +420,18 @@ if (isset($_REQUEST['cmd'])) {
             }
             this.bindKeyboardEvents = function() {
                 $('#stdin').on('keydown', { history : this.history, count : this.key_count }, function (ev) {
-                    var code = (ev.keyCode ? ev.keyCode : ev.which);
-                    if(ev.data.history.length > 0){
+                    var code = ev.keyCode ? ev.keyCode : ev.which;
+                    if (ev.data.history.length > 0) {
                         switch (code){
                             case 38:
-                                if (ev.data.count < (ev.data.history.length - 1)){
+                                if (ev.data.count < (ev.data.history.length - 1)) {
                                     ev.data.count++;
                                     var command = ev.data.history[(ev.data.history.length - 1) - ev.data.count];
                                     $('#stdin').val(command);
                                 }
                                 break;
                             case 40:
-                                if (ev.data.count < ev.data.history.length){
+                                if (ev.data.count >= 0) {
                                     ev.data.count--;
                                     var command = ev.data.history[(ev.data.history.length - 1) - ev.data.count];
                                     $('#stdin').val(command);
