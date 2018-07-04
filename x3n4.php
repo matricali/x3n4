@@ -361,10 +361,39 @@ if (isset($_REQUEST['cmd'])) {
             this.version = '<?php echo X3N4_VERSION; ?>';
             this.script_path = '<?php echo $_SERVER['REQUEST_URI']; ?>';
             this.algo = '<?php echo X3N4_ENCRYPTION_ALGORITHM; ?>';
-
-            this.history = [];
-            this.history_cursor = null;
-
+            this.history = {
+                list: JSON.parse(window.localStorage.getItem('history') || '[]'),
+                position: -1,
+                up: function() {
+                    if (this.list.length === 0) return;
+                    if (this.position < (this.list.length - 1)) {
+                        this.position++;
+                    }
+                    this.render();
+                },
+                down: function () {
+                    if (this.list.length === 0) return;
+                    if (this.position >= 0) {
+                        this.position--;
+                    }
+                    this.render();
+                },
+                render: function () {
+                    $('#stdin').val(this.list[(this.list.length - 1) - this.position]);
+                },
+                add: function (value) {
+                    this.list.push(value);
+                    this.position = -1;
+                    this.save();
+                },
+                clean: function () {
+                    this.list = [];
+                    window.localStorage.removeItem('history');
+                },
+                save: function () {
+                    window.localStorage.setItem('history', JSON.stringify(this.list));
+                }
+            }
             this.encrypt = function(input) {
                 switch (this.algo) {
                     case 'b64':
@@ -384,14 +413,19 @@ if (isset($_REQUEST['cmd'])) {
                 return input;
             }
             this.execCommand = function(command) {
-                if (command.trim() == 'clear') {
-                    $('#stdout').html('');
-                    return;
+                this.history.add(command);
+                /* Internal command handler */
+                switch (command.trim()) {
+                    case 'clear':
+                        $('#stdout').html('');
+                        return;
+                    case 'exit':
+                        this.history.clean();
+                        break;
                 }
-                this.history.push(command);
-                this.history_cursor = null;
                 $('#stdout').append($('#pwd').html() + " " + command + "\n");
                 var that = this;
+                /* Server-side command handler */
                 $.post(this.script_path, {cmd: this.encrypt(command)}, function(data) {
                     data = JSON.parse(that.decrypt(data));
                     $('#stdout').append(data.stdout);
@@ -418,45 +452,22 @@ if (isset($_REQUEST['cmd'])) {
                         $('#btnExecCommand').click()
                     }
                 });
-            }
-            this.bindKeyboardEvents = function () {
-                var $this = this;
-
-                $( '#stdin' ).on( 'keydown', function ( ev ) {
-                    var pressed_key = ( ev.keyCode ? ev.keyCode : ev.which );
-                    var history = $this.history;
-                    var history_length = history.length;
-
-                    var history_cursor = $this.history_cursor === null ? history_length : $this.history_cursor;
-
-                    var ARROW_KEY_UP = 38;
-                    var ARROW_KEY_DOWN = 40;
-                    var command;
-
-                    if ( history_length < 1 || (pressed_key != ARROW_KEY_UP && pressed_key != ARROW_KEY_DOWN)) {
-                        return;
+                $('#stdin').on('keydown', { history : this.history }, function (ev) {
+                    var code = ev.keyCode ? ev.keyCode : ev.which;
+                    switch (code) {
+                        case 38:
+                            ev.data.history.up();
+                            break;
+                        case 40:
+                            ev.data.history.down();
+                            break;
                     }
-                    
-                    if ( pressed_key == ARROW_KEY_UP ) {
-                        history_cursor--;
-                        command = history[ history_cursor ] || history[ 0 ];
-                    } else if ( pressed_key == ARROW_KEY_DOWN ) {
-                        history_cursor++;
-                        command = history[ history_cursor ] || '';
-                    }
-
-                    if( history_cursor > -1 && history_cursor <= history_length ) {
-                        $this.history_cursor = history_cursor;
-                    }
-                                
-                    $( '#stdin' ).val( command );
                 });
             }
         }
         window.x3n4 = new x3n4();
         window.x3n4.declareCallbacks();
         window.x3n4.checkUpdate();
-        window.x3n4.bindKeyboardEvents();
     </script>
 </body>
 </html>
