@@ -1,0 +1,29 @@
+languages: 'node_js'
+node_js: '8.0'
+php: '5.3'
+
+env:
+  global:
+  - secure: "fvcTDioUhO1lG+16+xdDcbfx5NKkuyEFU3FvfXkAe4N+nUVAgqutT53qr1bI1rMgan6yD7AoVOVa5YjDl6uHRdJAfi1D5kSgHquYwmwZmbafqEVTavM/JnQDOl6bYD38fLfFCYqKkPNUS1ubEDyeFUoJd+2tN3YmQZJyxqsUcOq4kzHavNEQh+cTdD2iQFOEyxJpuHg0eFpDCIU5rGLQndt5ZHROEVkw1qiVokospJpmxd3eK6QP8/Q6BG987g9VkG7qWVBHuvwFR+idy5cX2mVOEkP84uYNfuBfyx6B+rhYCMqINBwa1IBJ8ecW7A6wMOmk2hVYFPaPMgG0DFCU6CNJg738btlBHOrTuMX0uMREwKdZ4N+Y9nlTwlTLk4nv4SYUnT/J2MgRmyv673ilpUekUOf+FNqMwYG7331qxgA2AAkqn5IYr9oeE+YoFvKuF6NwZrT3h1we3J4Um4HPfWaASb0LuiszVkgG+kneakZtAOic4lkvQh+Ox360hH+twpONcCrJdbEOSUn7u+5u4DgVmdS5lSl66EypJ6GHZZfsoiOueIiUQxIAGOmFGNK96biKReSCnLfS9qwZrwfhvy4vNEjeJ5sN2nGHjzOPCee1wL4CazpmP6zpjz+4z/qXrL4u4rs0h7oVu2lhj3ZPxdycd3hTEmvVolmvcFKZrbE="
+  - GIT_USER='Jorge Matricali'
+  - GIT_EMAIL=jorgematricali@gmail.com
+  - GIT_REPO=github.com/jorge-matricali/x3n4.git
+before_install:
+- git config --global user.name "$GIT_USER"
+- git config --global user.email $GIT_EMAIL
+- export X3N4_VERSION=$(node -e "console.log(require('./package.json').version);")
+install: npm install
+before_script:
+  - npm install -g gulp-cli
+script: gulp build
+after_success: '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && [ "${TRAVIS_BRANCH}" = "master" ] && gulp deploy || false'
+deploy:
+  provider: releases
+  api_key:
+    secure: DQ7fn39rfcJOKUhWiivSGkQgdYUBZnjZL/Cw4rPaRu1PGXwlrHsz6vxOg3h0nspg0Sr0C/Fki2mkKTmBFmss4bT0veoDTJSiKiowgGHYbXPYuXkeBAHsbj2oe7EYPhm2sgO5A9Pr8QM34aj47wtdGloU5/DokEiYToP6Ml0PH+JyGgOh4dAt5nQgMkK1ACkSmutCNG8YPUTZPMHoCUbzsXcIXvkFLlEQvuwZUEGo7tri7FSOTO9P+6USjV3dW5B3c3g/t0K2ViLzqrYUgFrjsWEv3ZVpyz7+J50Xna3L7putg9j0NEn9o7PpJyitFSYgoQOuZJyji7aanc6lcI5bXQXrLsy8kxZJeD0/fC9/NR6LdjI5MeHI+kwW9QxSOEyOgWNOkxlB/yuXb3HhjQYjqgHVjkXIEUymPvioFNG/MFuFjepI2ZjNSeZYBmRzHQfESRDyJkK5uDana7FsYsr7SDPrauhUcI29f9M41yL1WYx0Za9lctSeK8FSdxIXMKfb1uCUPavzlwu2c5d8IOzAueUDwnFbaZr30iVCrXkp786qh8hDrQbF/TqqorZEgf2xJ9EHFL02IO2L8BRVQdVkTtXt6zcnpW2oEegyACoqi/1EGBK7kn79+Cj65fac+6JwNtfYFn11HpHQuO81OoomeT20okVvzTb4SUdfh+qnkGA=
+  skip_cleanup: true
+  file_glob: true
+  file: dist/x3n4.php
+  on:
+    tags: true
+    repo: jorge-matricali/x3n4
