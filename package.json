@@ -1,7 +1,7 @@
 {
   "name": "x3n4",
   "description": "Web-based shell written in PHP",
-  "version": "0.2.0-alpha",
+  "version": "1.0.0",
   "main": "",
   "repository": {
     "type": "git",
@@ -13,9 +13,9 @@
     "url": "https://github.com/jorge-matricali/x3n4/issues"
   },
   "homepage": "https://github.com/jorge-matricali/x3n4",
-  "devDependencies": {
+  "dependencies": {
     "del": "^2.2.2",
-    "gulp": "^3.9.0",
+    "gulp": "^3.9.1",
     "gulp-clean-css": "^3.7.0",
     "gulp-deploy-git": "^0.5.3",
     "gulp-exec": "^2.1.3",
