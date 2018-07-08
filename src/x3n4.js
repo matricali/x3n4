@@ -34,7 +34,7 @@ function x3n4 (options) {
     save: function () {
       window.localStorage.setItem('history', JSON.stringify(this.list));
     }
-  }
+  };
   this.encrypt = function(input) {
     switch (this.algo) {
       case 'b64':
@@ -43,7 +43,7 @@ function x3n4 (options) {
       return window.btoa(input).split('').reverse().join('');
     }
     return input;
-  }
+  };
   this.decrypt = function(input) {
     switch (this.algo) {
       case 'b64':
@@ -52,7 +52,7 @@ function x3n4 (options) {
       return window.atob(input.split('').reverse().join(''));
     }
     return input;
-  }
+  };
   this.execCommand = function(command) {
     this.history.add(command);
     /* Internal command handler */
@@ -73,11 +73,11 @@ function x3n4 (options) {
       $('#pwd').html(data.banner);
       $('#stdout').scrollTop($('#stdout')[0].scrollHeight);
     });
-  }
+  };
   this.clickExecCommand = function() {
     window.x3n4.execCommand($('#stdin').val());
     $('#stdin').val('');
-  }
+  };
   this.checkUpdate = function() {
     $.get('https://api.github.com/repos/jorge-matricali/x3n4/releases', function(data) {
       if (window.x3n4.version !== data[0].tag_name) {
@@ -85,12 +85,12 @@ function x3n4 (options) {
         $('#stdout').scrollTop($('#stdout')[0].scrollHeight);
       }
     });
-  }
+  };
   this.declareCallbacks = function() {
     $('#btnExecCommand').on('click', this.clickExecCommand);
     $('#stdin').on('keypress', function(ev) {
       if ((ev.keyCode ? ev.keyCode : ev.which) == '13') {
-        $('#btnExecCommand').click()
+        $('#btnExecCommand').click();
       }
     });
     $('#stdin').on('keydown', { history : this.history }, function (ev) {
@@ -104,5 +104,5 @@ function x3n4 (options) {
         break;
       }
     });
-  }
+  };
 }
