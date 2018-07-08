@@ -13,6 +13,8 @@ before_install:
 - git config --global user.email $GIT_EMAIL
 - export X3N4_VERSION=$(node -e "console.log(require('./package.json').version);")
 install: npm install
+before_script:
+  - npm install -g gulp-cli
 script: gulp build
 after_success: '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && [ "${TRAVIS_BRANCH}" = "master" ] && gulp deploy || false'
 deploy:
