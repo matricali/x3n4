@@ -146,7 +146,7 @@ function get_motd()
         case stristr(PHP_OS, 'DAR'): $command = 'sw_vers'; break;
         case stristr(PHP_OS, 'WIN'): $command = 'ver'; break;
         case stristr(PHP_OS, 'LINUX'): $command = 'cat /etc/motd'; break;
-        default : $command = '';
+        default: $command = '';
     }
     if (!empty($command)) {
         return execute_command($command);
@@ -154,7 +154,8 @@ function get_motd()
 
     return 'Welcome to x3n4 '.X3N4_VERSION;
 }
-function encrypt($input) {
+function encrypt($input)
+{
     switch (X3N4_ENCRYPTION_ALGORITHM) {
         case 'b64':
             return base64_encode($input);
@@ -164,7 +165,8 @@ function encrypt($input) {
     }
     return $input;
 }
-function decrypt($input) {
+function decrypt($input)
+{
     switch (X3N4_ENCRYPTION_ALGORITHM) {
         case 'b64':
             return base64_decode($input);
