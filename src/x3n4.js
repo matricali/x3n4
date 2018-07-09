@@ -77,7 +77,8 @@ function x3n4 (options) {
   this.evalPhp = function(code) {
     var evalt1 = Date.now();
     var that = this;
-    $.post(this.script_path, {eval: this.encrypt(code)}, function(data) {
+    var mechanism = $('#eval-mechanism').val() || 'auto';
+    $.post(this.script_path, {eval: this.encrypt(code), mechanism: mechanism}, function(data) {
       var evaltime = Date.now() - evalt1;
       data = JSON.parse(that.decrypt(data));
       $('#php-stdout').html(data.stdout || data);
@@ -123,5 +124,6 @@ function x3n4 (options) {
         break;
       }
     });
+    $('[data-toggle="tooltip"]').tooltip();
   };
 }
