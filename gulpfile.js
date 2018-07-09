@@ -40,50 +40,43 @@ var dir = {
 
 var distFilename = 'x3n4.php';
 
-// gulp.task('copy', function () {
-//   gulp.src(dir.src + '/x3n4.core.php').pipe(gulp.dest(dir.dist));
-//   gulp.src(dir.src + '/x3n4.template.php').pipe(gulp.dest(dir.dist));
-//   gulp.src(dir.src + '/x3n4.css').pipe(gulp.dest(dir.dist));
-//   gulp.src(dir.src + '/x3n4.js').pipe(gulp.dest(dir.dist));
-// });
-//
-// gulp.task('minify', function () {
-//   gulp.src('./src/x3n4.js')
-//     .pipe(uglify())
-//     .pipe(gulp.dest(dir.dist));
-//   gulp.src('./src/x3n4.css')
-//     .pipe(cleanCSS({compatibility: 'ie8'}))
-//     .pipe(gulp.dest(dir.dist));
-//   gulp.src('./src/x3n4.core.php')
-//     .pipe(exec('php -r "echo php_strip_whitespace(\'<%= file.path %>\');"', {pipeStdout: true}))
-//     .pipe(exec.reporter({stdout: false}))
-//     .pipe(gulp.dest(dir.dist));
-//   return gulp.src('./src/x3n4.template.php')
-//       .pipe(htmlmin({collapseWhitespace: true}))
-//       .pipe(gulp.dest(dir.dist));
-// });
+gulp.task('minify', function () {
+  gulp.src(dir.src + '/x3n4.js')
+    .pipe(uglify())
+    .pipe(gulp.dest(dir.dist));
+  gulp.src(dir.src + '/x3n4.css')
+    .pipe(cleanCSS({compatibility: 'ie8'}))
+    .pipe(gulp.dest(dir.dist));
+  gulp.src(dir.src + '/x3n4.core.php')
+    .pipe(exec('php -r "echo php_strip_whitespace(\'<%= file.path %>\');"', {pipeStdout: true}))
+    .pipe(exec.reporter({stdout: false}))
+    .pipe(gulp.dest(dir.dist));
+  gulp.src(dir.src + '/x3n4.template.php')
+      .pipe(htmlmin({collapseWhitespace: true}))
+      .pipe(gulp.dest(dir.dist));
+});
 
-// gulp.task('merge-min', ['minify'], function () {
-//   var x3n4_css = fs.readFileSync(dir.dist + '/x3n4.css', 'utf8');
-//   var x3n4_js = fs.readFileSync(dir.dist + '/x3n4.js', 'utf8');
-//   var x3n4_core = fs.readFileSync(dir.dist + '/x3n4.core.php', 'utf8') + ' ?>';
-//
-//   gulp.src(dir.dist + '/x3n4.template.php')
-//     .pipe(inject.replace(
-//       '<\\?php include\\(\'x3n4\\.core\\.php\'\\); \\?>',
-//       x3n4_core
-//     ))
-//     .pipe(inject.replace(
-//       '<\\?php readfile\\(\'x3n4\\.js\'\\); \\?>',
-//       x3n4_js
-//     ))
-//     .pipe(inject.replace(
-//       '<\\?php readfile\\(\'x3n4\\.css\'\\); \\?>',
-//       x3n4_css
-//     ))
-//     .pipe(rename('x3n4.min.php'))
-//     .pipe(gulp.dest(dir.dist));
-// });
+gulp.task('merge-min', ['minify'], function () {
+  var x3n4_css = fs.readFileSync(dir.dist + '/x3n4.css', 'utf8');
+  var x3n4_js = fs.readFileSync(dir.dist + '/x3n4.js', 'utf8');
+  var x3n4_core = fs.readFileSync(dir.dist + '/x3n4.core.php', 'utf8') + ' ?>';
+
+  gulp.src(dir.dist + '/x3n4.template.php')
+    .pipe(inject.replace(
+      '<\\?php include\\(\'x3n4\\.core\\.php\'\\); \\?>',
+      x3n4_core
+    ))
+    .pipe(inject.replace(
+      '<\\?php readfile\\(\'x3n4\\.js\'\\); \\?>',
+      x3n4_js
+    ))
+    .pipe(inject.replace(
+      '<\\?php readfile\\(\'x3n4\\.css\'\\); \\?>',
+      x3n4_css
+    ))
+    .pipe(rename('x3n4.min.php'))
+    .pipe(gulp.dest(dir.dist));
+});
 
 gulp.task('merge', function () {
   var x3n4_css = fs.readFileSync(dir.src + '/x3n4.css', 'utf8');
@@ -121,9 +114,4 @@ gulp.task('build', function (callback) {
   sequence(['clean'], ['merge'], callback);
 });
 
-// gulp.task('build-min', function (callback) {
-//   console.log('Building...');
-//   sequence(['clean'], ['merge-min'], callback);
-// });
-
-gulp.task('default', ['build']);
+gulp.task('default', ['build', 'merge-min']);
