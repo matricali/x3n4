@@ -23,6 +23,9 @@ This web-based shell is a useful tool for system or web administrators that need
   * Use `upgrade` command to automatically fetch the last x3n4 release from Github
 * Commands history
   * Use <kbd>⬆</kbd> and <kbd>⬇</kbd> keys when typing commands to navigate through history.
+* Run PHP scripts:
+  * eval()
+  * Alternative mechanism to eval(). (thanks to @davidtavarez).
 
 ### Requeriments:
 * PHP 4.3.3+, 5.x or 7.x

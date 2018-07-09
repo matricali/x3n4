@@ -74,6 +74,24 @@ function x3n4 (options) {
       $('#stdout').scrollTop($('#stdout')[0].scrollHeight);
     });
   };
+  this.evalPhp = function(code) {
+    var evalt1 = Date.now();
+    var that = this;
+    $.post(this.script_path, {eval: this.encrypt(code)}, function(data) {
+      var evaltime = Date.now() - evalt1;
+      data = JSON.parse(that.decrypt(data));
+      $('#php-stdout').html(data.stdout || data);
+      $('#eval-time-took').html('Request time: ' + evaltime + 'ms. ' +
+        (data.took ? 'PHP process time: ' + data.took + 'ms.' : ''));
+    });
+  };
+  this.clickEval = function (ev) {
+    var editor = window.editorPhp;
+    var code = editor ? editor.getValue() : false || $('#php-code').val();
+    if (code !== undefined) {
+      ev.data.x3n4.evalPhp(code);
+    }
+  };
   this.clickExecCommand = function() {
     window.x3n4.execCommand($('#stdin').val());
     $('#stdin').val('');
@@ -88,6 +106,7 @@ function x3n4 (options) {
   };
   this.declareCallbacks = function() {
     $('#btnExecCommand').on('click', this.clickExecCommand);
+    $('#btnEval').on('click', { x3n4 : this }, this.clickEval);
     $('#stdin').on('keypress', function(ev) {
       if ((ev.keyCode ? ev.keyCode : ev.which) == '13') {
         $('#btnExecCommand').click();

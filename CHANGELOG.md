@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Command history. (thanks to @davidtavarez).
 - Added support for multiple encryption algorithms. (b64, rb64).
+- Run PHP scripts using an alternative mechanism to eval(). (thanks to
+    @davidtavarez).
 
 ### Changed
 - Improved running user detection. (thanks to @davidtavarez).

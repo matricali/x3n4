@@ -3,3 +3,8 @@
     background: #2F3129;
     color: #8F908A;
 }
+#php-code,
+.ace_editor,
+.ace_text-input {
+    min-height: 200px;
+}
