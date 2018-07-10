@@ -3,3 +3,15 @@
     background: #2F3129;
     color: #8F908A;
 }
+body.loading:after {
+    content: "";
+    display: block;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 9999;
+    pointer-events: none;
+    background-color: rgba(255,255,255,0.7);
+}
