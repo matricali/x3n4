@@ -23,7 +23,7 @@
     <?php readfile('x3n4.css'); ?>
     </style>
 </head>
-<body>
+<body class="loading">
     <div class="container">
         <h1 class="page-header">
             <span class="pull-right label label-<?php echo ini_get('safe_mode') ? 'success' : 'danger'; ?>">safe_mode <?php echo ini_get('safe_mode') ? 'ON' : 'OFF'; ?></span>
@@ -158,10 +158,9 @@ echo \'hello world\';'; ?></textarea>
     <script>
     window.x3n4 = new x3n4({
       'version': '<?php echo X3N4_VERSION; ?>',
-      'script_path': '<?php echo $_SERVER['REQUEST_URI']; ?>',
-      'algo': '<?php echo X3N4_ENCRYPTION_ALGORITHM; ?>'
+      'endpoint': '<?php echo $_SERVER['REQUEST_URI']; ?>',
+      'encryption': '<?php echo X3N4_ENCRYPTION_ALGORITHM; ?>',
     });
-    window.x3n4.declareCallbacks();
     window.x3n4.checkUpdate();
     </script>
 </body>
