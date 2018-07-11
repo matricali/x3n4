@@ -33,6 +33,7 @@
         <ul class="nav nav-tabs" role="tablist">
             <li role="presentation"><a href="#information" aria-controls="information" role="tab" data-toggle="tab"><i class="fa fa-info-circle"></i> System information</a></li>
             <li role="presentation" class="active"><a href="#console" aria-controls="console" role="tab" data-toggle="tab"><i class="fa fa-terminal"></i> Console</a></li>
+            <li role="presentation"><a href="#php-eval" aria-controls="php-eval" role="tab" data-toggle="tab"><i class="fa fa-code"></i> eval()</a></li>
         </ul>
         <p></p>
         <div class="tab-content">
@@ -105,10 +106,36 @@
                         <span class="input-group-addon hidden-xs" id="pwd"><?php echo get_shell_prefix(); ?></span>
                         <input type="text" id="stdin" class="form-control" />
                         <span class="input-group-btn">
-                            <button type="button" class="btn btn-default" id="btnExecCommand">Send</button>
+                            <button type="button" class="btn btn-default" id="btnExecCommand"><i class="fa fa-chevron-right"></i> Send</button>
                         </span>
                     </div>
                 </div>
+            </div>
+
+            <div id="php-eval" role="tabpanel" class="tab-pane">
+                <textarea id="php-code" class="form-control"><?php echo '//<?php
+
+// place your code here
+echo \'hello world\';'; ?></textarea>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <p id="eval-time-took"></p>
+                    </div>
+                    <div class="col-sm-6 text-right">
+                        <div class="form-inline">
+                            <div class="form-group">
+                                <label class="visible-xs" for="eval-mechanism">Execution mechanism</label>
+                                <select class="form-control" id="eval-mechanism" data-toggle="tooltip" title="Select the execution mechanism">
+                                    <option value="auto" selected>auto</option>
+                                    <option value="eval">eval()</option>
+                                    <option value="tempfile">write and include temporary file</option>
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-default" id="btnEval"><i class="fa fa-play"></i> Run</button>
+                        </div>
+                    </div>
+                </div>
+                <pre id="php-stdout"></pre>
             </div>
         </div>
     </div>
@@ -117,6 +144,14 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.8/ace.js"></script>
+    <script>
+        window.editorPhp = ace.edit('php-code');
+        window.editorPhp.setTheme('ace/theme/monokai');
+        window.editorPhp.getSession().setMode('ace/mode/php');
+        window.editorPhp.getSession().setUseWrapMode(true);
+        window.editorPhp.resize(true);
+    </script>
     <script>
     <?php readfile('x3n4.js'); ?>
     </script>
