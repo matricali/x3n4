@@ -155,26 +155,39 @@ function x3n4 (opt) {
   };
 
   /* Run PHP Code */
-  this.evalPhp = function(code) {
-    var evalt1 = Date.now();
-    var that = this;
-    var mechanism = $('#eval-mechanism').val() || 'auto';
-    $.post(this.script_path, {eval: this.encrypt(code), mechanism: mechanism}, function(data) {
-      var evaltime = Date.now() - evalt1;
-      data = JSON.parse(that.decrypt(data));
-      $('#php-stdout').html(data.stdout || data);
-      $('#eval-time-took').html('Request time: ' + evaltime + 'ms. ' +
-        (data.took ? 'PHP process time: ' + data.took + 'ms.' : ''));
-    });
+  var Evaluator = function () {
+    var self = {
+      run: function (code) {
+        var et1 = Date.now();
+        var mechanism = $('#eval-mechanism').val() || 'auto';
+        $.post(
+          options.endpoint,
+          {
+            eval: encrypt(code),
+            mechanism: mechanism
+          },
+          function(data) {
+            var et = Date.now() - et1;
+            data = JSON.parse(decrypt(data));
+            $('#php-stdout').html(data.stdout || data);
+            $('#eval-time-took').html('Request time: ' + et + 'ms. ' +
+              (data.took ? 'PHP process time: ' + data.took + 'ms.' : ''));
+          }
+        );
+      }
+    };
+    /* Console UI Callbacks */
+    var onclick = function (ev) {
+      var editor = window.editorPhp;
+      var code = editor ? editor.getValue() : false || $('#php-code').val();
+      if (code !== undefined) {
+        self.run(code);
+      }
+    };
+    $('#btnEval').on('click', onclick);
+    /* return instance */
+    return self;
   };
-  this.clickEval = function (ev) {
-    var editor = window.editorPhp;
-    var code = editor ? editor.getValue() : false || $('#php-code').val();
-    if (code !== undefined) {
-      ev.data.x3n4.evalPhp(code);
-    }
-  };
-  $('#btnEval').on('click', { x3n4 : this }, this.clickEval);
 
   var checkUpdate = function() {
     var that = this;
@@ -188,6 +201,7 @@ function x3n4 (opt) {
   return {
     options: options,
     console: new CLI($('#stdout'), $('#stdin'), $('#btnExecCommand')),
+    evaluator: new Evaluator(),
     checkUpdate: checkUpdate,
   };
 }
