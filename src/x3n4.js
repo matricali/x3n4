@@ -6,6 +6,7 @@ function x3n4 (opt) {
     version: 'v1.0.0',
     endpoint: 'x3n4.php',
     encryption: 'rb64',
+    directorySeparator: '/',
   };
   var options = $.extend(true, defaults, opt);
 
@@ -189,6 +190,94 @@ function x3n4 (opt) {
     return self;
   };
 
+  /* File manager */
+  var FileManager = function (elm) {
+    var self = {
+      elm: elm,
+      formatSize: function (value) {
+        var exp = Math.log(value) / Math.log(1024) | 0;
+        return (this / Math.pow(1024, exp)).toFixed(2) + ' ' + (exp == 0 ? 'bytes': 'KMGTPEZY'[exp - 1] + 'B');
+      },
+      formatDate: function (d) {
+        var date = new Date(d);
+        return (date.getMonth() + 1) + '/' + date.getDate() + '/' + date.getFullYear();
+      },
+      safeTags: function (str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      },
+      pathLinks: function (path) {
+        var html = '';
+        var cpath = '';
+        $.each(path.split(options.directorySeparator), function (i, el) {
+          if (el === '') return;
+          cpath += options.directorySeparator + el;
+          html += options.directorySeparator + '<a href="#file-manager" onclick="window.x3n4.fileManager.getDirectory(\'' + cpath + '\')" title="' + cpath + '">' + el + '</a>';
+        });
+        return html;
+      },
+      getDirectory: function (path) {
+        // loadingStart();
+        $.get(options.endpoint + '?dir=' + path, function (data) {
+          //loadingStop();
+          if (typeof data === 'string') {
+            data = JSON.parse(decrypt(data));
+          }
+          self.renderDirectory(data);
+        });
+      },
+      getFile: function (path) {
+        self.elm.html('<p><i class="fa fa-chevron-right"></i> ' + this.pathLinks(path) + '</p>');
+        // loadingStart();
+        $.get(options.endpoint + '?file=' + path, function (data) {
+          // loadingStop();
+          if (typeof data === 'string') {
+            data = JSON.parse(decrypt(data));
+          }
+          self.elm.append($('<pre>' + self.safeTags(data.content) + '</pre>'));
+        });
+      },
+      renderDirectory: function (data) {
+        var html = '<p class="pull-right">';
+        if (data.isWritable) {
+          html += '<button class="btn btn-default" title="Create new file"><small><i class="fa fa-plus"></i></small> <i class="fa fa-file-o"></i></button> ';
+          html += '<button class="btn btn-default" title="Create new folder"><small><i class="fa fa-plus"></i></small> <i class="fa fa-folder-open-o"></i></button> ';
+        }
+        html += '</p>';
+        html += '<p><i class="fa fa-chevron-right"></i> ' + this.pathLinks(data.path) + '</p>';
+        html += '<div class="clearfix"></div>';
+        html += '<div class="table-responsive">';
+        html += '<table class="table"><thead><tr><th><input type="checkbox" /></span></th><th>Name</th><th>Permissions</th><th>Size</th><th>Modified date</th><th>Actions</th></tr></thead><tbody>';
+        if (data.files) {
+          $.each(data.files, function (i, el) {
+            if (el.filename !== '.' && el.filename !== '..') {
+              html += '<tr><td><input type="checkbox" /></td><td>';
+              if (el.type === 'folder') {
+                html += '<i class="fa fa-folder"></i> ';
+                html += '<a href="#file-manager" onclick="window.x3n4.fileManager.getDirectory(\'' + el.fullpath + '\')" title="' + el.filename + '">' + el.filename + '</a>';
+              } else {
+                html += '<i class="fa fa-file-o"></i> ';
+                html += '<a href="#file-manager" onclick="window.x3n4.fileManager.getFile(\'' + el.fullpath + '\')" title="' + el.filename + '">' + el.filename + '</a>';
+              }
+
+              html += '</td><td>' + (el.permissions ? el.permissions : '') + '</td>';
+              html += '<td>' + (el.type !== 'folder' ? '<span data-toggle="tooltip" title="' + el.size + ' bytes">' + self.formatSize(el.size) : '') + '</span></td>';
+              html += '<td>' + (el.modifiedAt && el.modifiedAt !== '' ? self.formatDate(el.modifiedAt) : '') + '</td>';
+              html += '<td><button type="button" class="btn btn-default pull-right"><i class="fa fa-list"></i></button></td>';
+              // ---
+              html += '</tr>';
+            }
+          });
+        }
+        html += '</tbody></table></div>';
+        self.elm.html(html);
+      }
+    };
+    /* Console UI Callbacks */
+
+    /* return instance */
+    return self;
+  };
+
   var checkUpdate = function() {
     var that = this;
     $.get('https://api.github.com/repos/jorge-matricali/x3n4/releases', function(data) {
@@ -203,5 +292,6 @@ function x3n4 (opt) {
     console: new CLI($('#stdout'), $('#stdin'), $('#btnExecCommand')),
     evaluator: new Evaluator(),
     checkUpdate: checkUpdate,
+    fileManager: new FileManager($('#file-manager')),
   };
 }

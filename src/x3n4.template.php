@@ -33,6 +33,7 @@
         <ul class="nav nav-tabs" role="tablist">
             <li role="presentation"><a href="#information" aria-controls="information" role="tab" data-toggle="tab"><i class="fa fa-info-circle"></i> System information</a></li>
             <li role="presentation" class="active"><a href="#console" aria-controls="console" role="tab" data-toggle="tab"><i class="fa fa-terminal"></i> Console</a></li>
+            <li role="presentation"><a href="#file-manager" aria-controls="file-manager" role="tab" data-toggle="tab"><i class="fa fa-file-code-o"></i> File manager</a></li>
             <li role="presentation"><a href="#php-eval" aria-controls="php-eval" role="tab" data-toggle="tab"><i class="fa fa-code"></i> eval()</a></li>
         </ul>
         <p></p>
@@ -110,6 +111,9 @@
                         </span>
                     </div>
                 </div>
+            </div>
+
+            <div id="file-manager" role="tabpanel" class="tab-pane">
             </div>
 
             <div id="php-eval" role="tabpanel" class="tab-pane">
