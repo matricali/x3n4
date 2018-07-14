@@ -168,7 +168,11 @@ function x3n4 (opt) {
           },
           function(data) {
             var et = Date.now() - et1;
-            data = JSON.parse(decrypt(data));
+            data = decrypt(data);
+            try {
+                data = JSON.parse(data);
+            } catch (e) {
+            }
             $('#php-stdout').html(data.stdout || data);
             $('#eval-time-took').html('Request time: ' + et + 'ms. ' +
               (data.took ? 'PHP process time: ' + data.took + 'ms.' : ''));
