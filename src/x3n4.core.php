@@ -228,6 +228,13 @@ function do_eval($code, $mech = 'auto')
 
         case 'tempfile':
             return better_eval($code);
+
+        case 'assert':
+            ob_start();
+            assert($code);
+            $output = ob_get_contents();
+            ob_get_clean();
+            return $output;
     }
     return false;
 }

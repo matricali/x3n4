@@ -129,6 +129,7 @@ echo \'hello world\';'; ?></textarea>
                                     <option value="auto" selected>auto</option>
                                     <option value="eval">eval()</option>
                                     <option value="tempfile">write and include temporary file</option>
+                                    <option value="assert">assert()</option>
                                 </select>
                             </div>
                             <button type="button" class="btn btn-default" id="btnEval"><i class="fa fa-play"></i> Run</button>
