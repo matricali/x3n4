@@ -351,7 +351,8 @@ function file_permissions($filename)
 
 if (isset($_REQUEST['dir'])) {
     $t1 = microtime(true);
-    $directory = realpath(trim($_REQUEST['dir']));
+    $path = decrypt(trim($_REQUEST['dir']));
+    $directory = realpath(trim($path));
     $output = list_folder_files($directory);
     $t2 = microtime(true);
     output_json(array(
@@ -363,11 +364,12 @@ if (isset($_REQUEST['dir'])) {
 }
 if (isset($_REQUEST['file'])) {
     $t1 = microtime(true);
-    $filepath = realpath(trim($_REQUEST['file']));
-    $output = file_get_contents($filepath);
+    $path = decrypt(trim($_REQUEST['file']));
+    $realpath = realpath(trim($path));
+    $output = file_get_contents($realpath);
     $t2 = microtime(true);
     output_json(array(
-        'path' => $filepath,
+        'path' => $realpath,
         'content' => $output,
         'took' => round($t2 - $t1, 2),
     ));
