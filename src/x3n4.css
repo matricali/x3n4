@@ -1,0 +1,18 @@
+#stdout {
+    max-height: 650px;
+    background: #2F3129;
+    color: #8F908A;
+}
+/* PHP EVAL */
+#php-code,
+.ace_editor,
+.ace_text-input {
+    min-height: 200px;
+}
+#php-stdout {
+    margin-top: 10px;
+}
+#eval-time-took {
+    margin: auto;
+    padding: 5px;
+}
