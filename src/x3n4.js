@@ -29,6 +29,12 @@ function x3n4 (opt) {
     }
     return input;
   };
+  var loadingStart = function () {
+    $('body').addClass('loading');
+  };
+  var loadingStop = function () {
+    $('body').removeClass('loading');
+  };
 
   /* Command-line interface */
   var CLI = function (a, b, c) {
@@ -196,7 +202,9 @@ function x3n4 (opt) {
       elm: elm,
       formatSize: function (value) {
         var exp = Math.log(value) / Math.log(1024) | 0;
-        return (this / Math.pow(1024, exp)).toFixed(2) + ' ' + (exp == 0 ? 'bytes': 'KMGTPEZY'[exp - 1] + 'B');
+        var v = value / Math.pow(1024, exp);
+        return (+(Math.round(v + 'e+2') + 'e-2')) + ' ' +
+          (exp == 0 ? 'bytes': 'KMGTPEZY'[exp - 1] + 'B');
       },
       formatDate: function (d) {
         var date = new Date(d);
@@ -216,9 +224,9 @@ function x3n4 (opt) {
         return html;
       },
       getDirectory: function (path) {
-        // loadingStart();
-        $.get(options.endpoint + '?dir=' + path, function (data) {
-          //loadingStop();
+        loadingStart();
+        $.get(options.endpoint + '?dir=' + encrypt(path), function (data) {
+          loadingStop();
           if (typeof data === 'string') {
             data = JSON.parse(decrypt(data));
           }
@@ -227,9 +235,9 @@ function x3n4 (opt) {
       },
       getFile: function (path) {
         self.elm.html('<p><i class="fa fa-chevron-right"></i> ' + this.pathLinks(path) + '</p>');
-        // loadingStart();
-        $.get(options.endpoint + '?file=' + path, function (data) {
-          // loadingStop();
+        loadingStart();
+        $.get(options.endpoint + '?file=' + encrypt(path), function (data) {
+          loadingStop();
           if (typeof data === 'string') {
             data = JSON.parse(decrypt(data));
           }
@@ -262,7 +270,7 @@ function x3n4 (opt) {
               html += '</td><td>' + (el.permissions ? el.permissions : '') + '</td>';
               html += '<td>' + (el.type !== 'folder' ? '<span data-toggle="tooltip" title="' + el.size + ' bytes">' + self.formatSize(el.size) : '') + '</span></td>';
               html += '<td>' + (el.modifiedAt && el.modifiedAt !== '' ? self.formatDate(el.modifiedAt) : '') + '</td>';
-              html += '<td><button type="button" class="btn btn-default pull-right"><i class="fa fa-list"></i></button></td>';
+              html += '<td><button type="button" class="btn btn-default btn-xs pull-right"><i class="fa fa-list"></i></button></td>';
               // ---
               html += '</tr>';
             }
@@ -273,6 +281,7 @@ function x3n4 (opt) {
       }
     };
     /* Console UI Callbacks */
+    self.getDirectory('.');
 
     /* return instance */
     return self;
